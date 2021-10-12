@@ -1,0 +1,16 @@
+{
+    "query" : "select uid, nome, peso * 1000 as grammi from individuo where uidcitta < 3 order by grammi desc",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["UID", "NOME","GRAMMI"],
+    "tuples" : [
+        [4,"Paolo",102000],
+        [9,"Camila", 77000],
+        [1,"Mario", 85000],
+        [3,"Luca",59000],
+        [10,"Ettore", 45000],
+        [13,"Luca","NULL"]
+
+    ]
+}

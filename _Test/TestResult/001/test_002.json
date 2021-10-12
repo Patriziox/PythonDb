@@ -1,0 +1,19 @@
+{
+    "query" : "select Uid as Index, Nome from individuo order by Nome",
+    "checkMode" : "checksorted",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDEX", "NOME"],
+    "tuples" : [
+        {"data" : [[2,"Anna"], [11,"Anna"]]},
+        [9,"Camila"],
+        [6,"Carlo"],
+        [8,"Elisa"],
+        [10,"Ettore"],
+        {"data" : [[12,"Giulio"],[7,"Giulio"]]},
+        [5,"Laura"],
+        {"data" : [[13,"Luca"], [3,"Luca"]]},
+        [1,"Mario"],
+        [4,"Paolo"]
+    ]
+}

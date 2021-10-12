@@ -1,0 +1,46 @@
+Document/HAVING clause.pdf
+Document/How ORDER BY and NULL Work Together in SQL _ LearnSQL.com.pdf
+Document/How to Use Comparison Operators with NULLs in SQL _ LearnSQL.com.pdf
+Document/NULL Values and the GROUP BY Clause _ LearnSQL.com.pdf
+_Test/__pycache__/Test_SqlSelect.cpython-310.pyc
+Source/__pycache__/FileSystem.cpython-310.pyc
+Source/__pycache__/SqlError.cpython-310.pyc
+Source/__pycache__/SqlGeneric.cpython-310.pyc
+Source/__pycache__/SqlGlobals.cpython-310.pyc
+Source/SQL/__pycache__/SqlAggregate.cpython-310.pyc
+Source/SQL/__pycache__/SqlCase.cpython-310.pyc
+Source/SQL/__pycache__/SqlCheck.cpython-310.pyc
+Source/SQL/__pycache__/SqlColKeys.cpython-310.pyc
+Source/SQL/__pycache__/SqlColumn.cpython-310.pyc
+Source/SQL/__pycache__/SqlDataBase.cpython-310.pyc
+Source/SQL/__pycache__/SqlExpression.cpython-310.pyc
+Source/SQL/__pycache__/SqlForeignKey.cpython-310.pyc
+Source/SQL/__pycache__/SqlNull.cpython-310.pyc
+Source/SQL/__pycache__/SqlQuery.cpython-310.pyc
+Source/SQL/__pycache__/SqlRecord.cpython-310.pyc
+Source/SQL/__pycache__/SqlRecordHead.cpython-310.pyc
+Source/SQL/__pycache__/SqlSchema.cpython-310.pyc
+Source/SQL/__pycache__/SqlSelect.cpython-310.pyc
+Source/SQL/__pycache__/SqlTable.cpython-310.pyc
+Source/SQL/__pycache__/SqlTableHead.cpython-310.pyc
+Source/SQL/__pycache__/SqlTables.cpython-310.pyc
+Source/SQL/__pycache__/SqlTuple.cpython-310.pyc
+Source/SQL/__pycache__/SqlUnique.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpSocket.cpython-310.pyc
+DBMain/Database/anagrafe/anagrafe.db
+DBMain/Database/anagrafe/Tables/TAB_CITTA.dat
+DBMain/Database/anagrafe/Tables/TAB_CITTA.def
+DBMain/Database/anagrafe/Tables/TAB_CITTA.head
+DBMain/Database/anagrafe/Tables/TAB_INDIVIDUO.dat
+DBMain/Database/anagrafe/Tables/TAB_INDIVIDUO.def
+DBMain/Database/anagrafe/Tables/TAB_INDIVIDUO.head
+DBMain/Database/anagrafeTest/anagrafeTest.db
+DBMain/Database/anagrafeTest/Tables/TAB_CITTA.dat
+DBMain/Database/anagrafeTest/Tables/TAB_CITTA.def
+DBMain/Database/anagrafeTest/Tables/TAB_CITTA.head
+DBMain/Database/anagrafeTest/Tables/TAB_INDIVIDUO.dat
+DBMain/Database/anagrafeTest/Tables/TAB_INDIVIDUO.def
+DBMain/Database/anagrafeTest/Tables/TAB_INDIVIDUO.head
+DBMain/Sys/users.dat
+Document/sql.txt
+Document/Sql1.txt

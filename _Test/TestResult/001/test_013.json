@@ -1,0 +1,19 @@
+{
+    "query" : "select Individuo.uid, Individuo.nome, citta.nome, case(when eta > 60 then \"OLD\" when eta > 18 then \"BIG\" else \"BABY\" end as stato) from individuo join citta on INDIVIDUO.uidcitta = citta.uidCitta order by citta.uidcitta,INDIVIDUo.nome",
+    "checkMode" : "checksorted",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UID", "INDIVIDUO.NOME", "CITTA.NOME", "STATO"],
+    "tuples" : [
+
+        [9,"Camila","Tokio", "BABY"],
+        [1,"Mario", "Tokio", "BIG"],
+        [4,"Paolo","Tokio", "BIG"],
+        [10,"Ettore", "Parigi", "BABY"],
+        {"data" : [[3,"Luca", "Parigi", "OLD"],[13,"Luca", "Parigi", "OLD"]]},
+        {"data" : [[2,"Anna", "Roma", "BABY"],[11,"Anna", "Roma", "BIG"]]},
+        [8,"Elisa", "Roma", "OLD"],
+        [6,"Carlo", "Londra", "OLD"],
+        {"data" : [[7,"Giulio", "Londra", "OLD"], [12,"Giulio", "Londra", "BABY"]]}
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "query" : "select citta.uidCitta, citta.nome, avg(peso) as avgPeso from individuo, citta where individuo.uidCitta=citta.uidCitta group by individuo.uidCitta having avgpeso >= 66",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["CITTA.UIDCITTA", "CITTA.NOME", "AVGPESO"],
+    "tuples" : [
+        [1, "Tokio", 88],
+        [4, "Londra", 66],
+        [3, "Roma", 66]
+    ]
+}

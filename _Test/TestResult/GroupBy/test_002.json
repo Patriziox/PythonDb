@@ -1,0 +1,13 @@
+{
+    "query" : "select citta.nome, sum(Individuo.eta) AS ETA from Individuo, citta where Individuo.uidCitta = citta.uidCitta group by citta.nome",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["CITTA.NOME", "ETA"],
+    "tuples" : [
+        ["Tokio", 87],
+        ["Parigi", 93],
+        ["Roma", 79],
+        ["Londra", 179]
+    ]
+}

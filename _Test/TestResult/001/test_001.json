@@ -1,0 +1,22 @@
+{
+    "query" : "select * from individuo",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UID", "INDIVIDUO.NOME", "INDIVIDUO.ETA", "INDIVIDUO.UIDCITTA", "INDIVIDUO.PESO"],
+    "tuples" : [
+        [1,"Mario",40,1,85],
+        [2,"Anna",17,3,42],
+        [3,"Luca",75,2,59],
+        [4,"Paolo",36,1,102],
+        [5,"Laura",12,"NULL",78],
+        [6,"Carlo",80,4,78],
+        [7,"Giulio",99,4,54],
+        [8,"Elisa",62,3,90],
+        [9,"Camila",11,1,77],
+        [10,"Ettore",18,2,45],
+        [11,"Anna", 47, 3, 117],
+        [12, "Giulio", 9, 4, 35],
+        [13, "Luca", 80, 2, "NULL"]
+    ]
+}

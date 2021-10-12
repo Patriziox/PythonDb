@@ -1,0 +1,13 @@
+{
+    "query" : "select citta.nome, count(Individuo.uidCitta) AS CNT from Individuo, citta where Individuo.uidCitta = citta.uidCitta group by citta.nome",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["CITTA.NOME", "CNT"],
+    "tuples" : [
+        ["Tokio", 3],
+        ["Parigi", 2],
+        ["Roma", 2],
+        ["Londra", 2]
+    ]
+}

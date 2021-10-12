@@ -1,0 +1,20 @@
+{
+    "query" : "select Individuo.uid, Individuo.nome, citta.nome from individuo left join citta on INDIVIDUO.uidcitta = citta.uidCitta order by citta.uidcitta,INDIVIDUo.nome ",
+    "checkMode" : "checksorted",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UID", "INDIVIDUO.NOME", "CITTA.NOME"],
+    "tuples" : [
+
+        [5,"Laura", "NULL"],
+        [9,"Camila","Tokio"],
+        [1,"Mario", "Tokio"],
+        [4,"Paolo","Tokio"],
+        [10,"Ettore", "Parigi"],
+        {"data" : [[3,"Luca", "Parigi"],[13,"Luca", "Parigi"]]},
+        {"data" : [[2,"Anna", "Roma"],[11,"Anna", "Roma"]]},
+        [8,"Elisa", "Roma"],
+        [6,"Carlo", "Londra"],
+        {"data" : [[12,"Giulio", "Londra"], [7, "Giulio", "Londra"]]}
+    ]
+}

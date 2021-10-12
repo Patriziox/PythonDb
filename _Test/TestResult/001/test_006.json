@@ -1,0 +1,14 @@
+{
+    "query" : "select distinct uidcitta as uid from individuo",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["UID"],
+    "tuples" : [
+        [1],
+        [2],
+        [3],
+        [4],
+        ["NULL"]
+    ]
+}

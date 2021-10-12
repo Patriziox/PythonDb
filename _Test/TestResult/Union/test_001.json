@@ -1,0 +1,25 @@
+{
+    "query" : "select Individuo.uid, Individuo.nome from individuo  union  select uidCitta, nome from citta",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UID", "INDIVIDUO.NOME"],
+    "tuples" : [
+
+        [1,"Mario"],
+        [2,"Anna"],
+        [3,"Luca"],
+        [4,"Paolo"],
+        [5,"Laura"],
+        [6,"Carlo"],
+        [7,"Giulio"],
+        [8,"Elisa"],
+        [9,"Camila"],
+        [10,"Ettore"],
+        [1,"Tokio"],
+        [2,"Parigi"],
+        [3,"Roma"],
+        [4,"Londra"],
+        [5,"Madrid"]
+    ]
+}

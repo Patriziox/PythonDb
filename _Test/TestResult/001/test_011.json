@@ -1,0 +1,23 @@
+{
+    "query" : "select uidCitta as citta, individuo.Nome from individuo order by uidCitta desc, Nome asc",
+    "checkMode" : "checksorted",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["CITTA", "INDIVIDUO.NOME"],
+    "tuples" : [
+        
+        [4,"Carlo"],
+        [4,"Giulio"],
+        [4,"Giulio"],
+        [3,"Anna"],
+        [3,"Anna"],
+        [3,"Elisa"],
+        [2,"Ettore"],
+        [2,"Luca"],
+        [2,"Luca"],
+        [1,"Camila"],
+        [1,"Mario"],
+        [1,"Paolo"],
+        ["NULL","Laura"]
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "query" : "select * from individuo, citta where INDIVIDUO.uidcitta = citta.uidCitta",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UID", "INDIVIDUO.NOME", "INDIVIDUO.ETA", "INDIVIDUO.UIDCITTA", "INDIVIDUO.PESO", "CITTA.UIDCITTA", "CITTA.NOME", "CITTA.QNTABITANTI" ],
+    "tuples" : [
+        [1,"Mario",40,1,85, 1,"Tokio", 100],
+        [2,"Anna",17,3,42, 3, "Roma", 60],
+        [3,"Luca",75,2,59, 2, "Parigi", 80],
+        [4,"Paolo",36,1,102, 1,"Tokio", 100],
+        [6,"Carlo",80,4,78, 4, "Londra", 85],
+        [7,"Giulio",99,4,54, 4, "Londra", 85],
+        [8,"Elisa",62,3,90, 3, "Roma", 60],
+        [9,"Camila",11,1,77, 1,"Tokio", 100],
+        [10,"Ettore",18,2,45, 2, "Parigi", 80],
+        [11,"Anna",47,3,117, 3, "Roma", 60],
+        [12,"Giulio",9,4,35, 4, "Londra", 85],
+        [13,"Luca",80,2,"NULL", 2, "Parigi", 80]
+    ]
+}

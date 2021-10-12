@@ -1,0 +1,10 @@
+{
+    "query" : "select uid, eta from individuo union select uidCitta, QntAbitanti from citta",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UID", "INDIVIDUO.ETA"],
+    "tuples" : [
+        
+    ]
+}

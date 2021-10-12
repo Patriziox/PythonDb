@@ -1,0 +1,15 @@
+{
+    "query" : "select Uid as Index, individuo.Nome, peso from individuo where peso between 50 and 89",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDEX", "INDIVIDUO.NOME", "PESO"],
+    "tuples" : [
+        [1,"Mario",85],
+        [3,"Luca",59],
+        [5,"Laura",78],
+        [6,"Carlo",78],
+        [7,"Giulio",54],
+        [9,"Camila",77]
+    ]
+}

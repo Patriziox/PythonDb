@@ -1,0 +1,13 @@
+{
+    "query" : "select citta.nome, max(Individuo.eta) AS MAX, min(Individuo.eta) AS Min from Individuo, citta where Individuo.uidCitta = citta.uidCitta group by citta.nome",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["CITTA.NOME", "MAX", "MIN"],
+    "tuples" : [
+        ["Tokio", 40, 11],
+        ["Parigi", 75, 18],
+        ["Roma", 62, 17],
+        ["Londra", 99, 80]
+    ]
+}
