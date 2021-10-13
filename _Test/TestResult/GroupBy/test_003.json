@@ -6,7 +6,6 @@
     "caption" : ["CITTA.UIDCITTA", "CITTA.NOME", "AVGPESO"],
     "tuples" : [
         [1, "Tokio", 88],
-        [4, "Londra", 66],
-        [3, "Roma", 66]
+        [3, "Roma", 83]
     ]
 }

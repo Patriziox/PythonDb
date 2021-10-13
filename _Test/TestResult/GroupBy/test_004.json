@@ -6,8 +6,8 @@
     "caption" : ["CITTA.NOME", "MAX", "MIN"],
     "tuples" : [
         ["Tokio", 40, 11],
-        ["Parigi", 75, 18],
+        ["Parigi", 80, 18],
         ["Roma", 62, 17],
-        ["Londra", 99, 80]
+        ["Londra", 99, 9]
     ]
 }

@@ -77,6 +77,9 @@ class SqlShell:
                         # 'select uidCitta as citta, individuo.Nome from individuo order by uidCitta desc, Nome asc'
                         # 'select Individuo.uid, Individuo.nome, citta.nome from individuo left join citta on INDIVIDUO.uidcitta = citta.uidCitta order by citta.uidcitta,INDIVIDUo.nome'
                         # 'select Individuo.uid, Individuo.nome, citta.nome, case(when eta > 60 then \"OLD\" when eta > 18 then \"BIG\" else \"BABY\" end as stato) from individuo join citta on INDIVIDUO.uidcitta = citta.uidCitta order by citta.uidcitta,INDIVIDUo.nome'
+                        'select individuo.uidCitta, count(*) from individuo group by individuo.uidCitta',
+                        # 'select individuo.uidCitta, peso from individuo GROUP BY grouping sets (individuo.uidCitta), (peso)',
+
             )
 
             for sRequest in tsRequest :

@@ -69,19 +69,19 @@ class TestSqlSelect(unittest.TestCase) :
     def test_Select(self) :
        
         tQuery = (
-            ('001', 'Test_001'),
-            ('001', 'Test_002'),
-            ('001', 'Test_003'),
-            ('001', 'Test_004'),
-            ('001', 'Test_006'),
-            ('001', 'Test_007'),
-            ('001', 'Test_008'),
-            ('001', 'Test_009'),
-            ('001', 'Test_011'),
-            ('001', 'Test_012'),
-            ('001', 'Test_013'),
-            ('GroupBy', 'Test_001'),
-            ('GroupBy', 'Test_002'),
+            # ('001', 'Test_001'),
+            # ('001', 'Test_002'),
+            # ('001', 'Test_003'),
+            # ('001', 'Test_004'),
+            # ('001', 'Test_006'),
+            # ('001', 'Test_007'),
+            # ('001', 'Test_008'),
+            # ('001', 'Test_009'),
+            # ('001', 'Test_011'),
+            # ('001', 'Test_012'),
+            # ('001', 'Test_013'),
+            # ('GroupBy', 'Test_001'),
+            # ('GroupBy', 'Test_002'),
             ('GroupBy', 'Test_003'),
             ('GroupBy', 'Test_004'),
             ('Union', 'Test_001'),
@@ -91,7 +91,7 @@ class TestSqlSelect(unittest.TestCase) :
         for tItem in tQuery :
 
             print('')
-            print(f'{tItem[1]}...')
+            print(f'{tItem[0]}\\{tItem[1]}...')
 
             sFullPath = f'{os.path.dirname(__file__)}\\TestResult\\{tItem[0]}\\{tItem[1]}.json'
 

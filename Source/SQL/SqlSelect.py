@@ -44,6 +44,7 @@ class SqlSelect:
     st_tSelectClause = (
         (' WHERE EXISTS ', '_WhereExistsParser', None),
         (' WHERE ', '_WhereParser', None),
+		(' GROUP BY GROUPING SETS ', '_GroupingSetsParser', None),
 		(' GROUP BY ', '_GroupByParser', None),
 		(' ORDER BY ', '_OrderByParser', None),
 		(' HAVING ', '_HavingParser', None),
@@ -73,7 +74,7 @@ class SqlSelect:
         
         self.m_oWhere = None
         self.m_oHaving = None
-        self.m_vGroupBy = []
+        self.m_vvGroupBy = []
         self.m_vbSortingMode = []
         self.m_voOrderBy = []
         self.m_voAggregate = []
@@ -218,17 +219,24 @@ class SqlSelect:
                 self.m_oError = oCase.GetError()
                 return None
         
-        if self.m_vGroupBy :
-            for iIndex, oGroupCol in enumerate(self.m_vGroupBy) :
+        if self.m_vvGroupBy :
+            
+            for iIndex, vGroupRule in enumerate(self.m_vvGroupBy) :
+				
+                vGroupBy = []
+                
+                for oGroupCol in vGroupRule :
 
-                for oSchema in self.m_oSchema :
-                    if oSchema.GetTableUid() == oGroupCol.GetTableUid() :
-                        if oSchema.GetColumn() == oGroupCol.GetColumn() :
-                            self.m_vGroupBy[iIndex] = oSchema
-                            break
-                else :
+                    for oSchema in self.m_oSchema :
+                        if oSchema.GetTableUid() == oGroupCol.GetTableUid() :
+                            if oSchema.GetColumn() == oGroupCol.GetColumn() :
+                                vGroupBy.append(oSchema)
+                                break
+                    else :
 
-                    return None
+                        return None
+				
+                self.m_vvGroupBy[iIndex] = vGroupBy
 
         if self.m_voOrderBy :
             if not self._OrderByManager() :
@@ -539,7 +547,9 @@ class SqlSelect:
         vsColums = Gen.Cut(sColums, ',')
 
         oTableKeys = self.m_oTables.GetTableKeys()
-
+		
+        vvGroupBy = []
+        
         for sColName in vsColums:
             
             oTupla = oTableKeys.GetKeys(sColName)
@@ -547,9 +557,152 @@ class SqlSelect:
             if not oTupla :
                 return False, None, None, None
 
-            self.m_vGroupBy.append(oTupla)
-
+            vvGroupBy.append(oTupla)
+        
+        self.m_vvGroupBy = [vvGroupBy]
+		
         return True, iIndexHnd, sFoot, oHandler
+
+    def _GroupByManager(self, vvFullTupleSet : list) -> list:
+
+        vGroupBy = []
+
+        vGroupByRule = self.m_vvGroupBy[0]
+
+        vGroupFullTuple = []
+        
+        for oSingleFullTupla in vvFullTupleSet:
+            
+            vGroupingValues = []
+
+            for oHook in vGroupByRule :
+                
+                iTabIndex = oHook.GetIndex()
+                iColIndex = oHook.GetColumn()
+
+                oValue = oSingleFullTupla[iTabIndex][iColIndex]
+
+                if oValue == 'NULL' :
+                    break
+
+                vGroupingValues.append(oValue)
+            
+            else :
+
+                for iGroup, oValue in enumerate(vGroupBy) :
+                    if vGroupingValues == oValue :
+                        iGroupIndex = iGroup
+                        break
+                else :
+                    
+                    iGroupIndex = len(vGroupBy)
+                    vGroupBy.append(vGroupingValues)
+
+                    vGroupFullTuple.append(oSingleFullTupla)
+
+                if self.m_voAggregate :
+                    for oAggrFunc in self.m_voAggregate :
+                        oAggrFunc.Evalute(oSingleFullTupla, iGroupIndex) 
+
+        return vGroupFullTuple 
+    
+    def _GroupingSetsParser(self, sQuery : str) :
+        
+        iIndexHnd, oHandler, sGroupingRule, sFoot = Gen.GetHandler(self, sQuery, SqlSelect.st_tSelectClause)
+		
+        if not sGroupingRule :
+            return False, None, None, None
+			
+        oTableKeys = self.m_oTables.GetTableKeys()
+        
+        vvGroupBy = []	
+                
+        while sGroupingRule :
+            
+            vGroupBy = []
+            
+            sThisRule, sGroupingRule, bResult = Gen.Split(sGroupingRule, ',')
+        
+            vsColums = Gen.Cut(Gen.RemoveTonde(sThisRule)[0], ',')
+        
+            for sColName in vsColums:
+            
+                oTupla = oTableKeys.GetKeys(sColName)
+
+                if not oTupla :
+                    return False, None, None, None
+
+                vGroupBy.append(oTupla)
+        
+            vvGroupBy.append(vGroupBy)
+        
+        self.m_vvGroupBy = vvGroupBy
+                
+        return True, iIndexHnd, sFoot, oHandler
+
+    def _GroupingSetsManager(self, vvFullTupleSet : list) -> list:
+        
+        vvGroupBy = [None] * len(self.m_vvGroupBy)
+        vvGroupFullTuple = [None] * len(self.m_vvGroupBy)
+        
+        oTuplaBase = []
+
+        for vSingleTableTupla in vvFullTupleSet[0] :
+            vTupla = [NULL] * len(vSingleTableTupla)
+            oTuplaBase.append(vTupla)
+
+        for oSingleFullTupla in vvFullTupleSet :
+            
+            for iThisGroupSet, vGroupRule in enumerate(self.m_vvGroupBy) :
+            
+                vGroupingValues = []
+
+                oSingleGroupingTupla = deepcopy(oTuplaBase)
+
+                for oHook in vGroupRule :
+                    
+                    iTabIndex = oHook.GetIndex()
+                    iColIndex = oHook.GetColumn()
+
+                    oValue = oSingleFullTupla[iTabIndex][iColIndex]
+
+                    if oValue == 'NULL' :
+                        break
+
+                    vGroupingValues.append(oValue)
+
+                    oSingleGroupingTupla[iTabIndex][iColIndex] = oValue
+
+                else :
+                    
+                    if vvGroupBy[iThisGroupSet] is None :
+                        
+                        vvGroupBy[iThisGroupSet] = [vGroupingValues]
+                        vvGroupFullTuple[iThisGroupSet] = [oSingleGroupingTupla]
+                        iGroupIndex = 0
+
+                    else :
+                        for iGroup, oValue in enumerate(vvGroupBy[iThisGroupSet]) :
+                            if vGroupingValues == oValue :
+                                iGroupIndex = iGroup
+                                break
+                        else :
+                            
+                            iGroupIndex = len(vvGroupBy[iThisGroupSet])
+                            vvGroupBy[iThisGroupSet].append(vGroupingValues)
+                            vvGroupFullTuple[iThisGroupSet].append(oSingleGroupingTupla)
+                        
+                    if self.m_voAggregate :
+                        for oAggrFunc in self.m_voAggregate :
+                            oAggrFunc.Evalute(oSingleGroupingTupla, iGroupIndex) 
+
+        
+        vvFullTupleSet = []
+        
+        for vGroup in vvGroupFullTuple :
+            vvFullTupleSet.extend(vGroup)
+
+        return vvFullTupleSet
 
     def _OrderByParser(self, sQuery : str):
 
@@ -817,24 +970,30 @@ class SqlSelect:
 
     def _AggregateFunc(self, vvFullTupleSet : list, bExternValue : bool) :
         
-        if self.m_vGroupBy :
+        if self.m_vvGroupBy :
+			
+            iGroupIndex = -1
+            
+            rStep = range(len(self.m_vvGroupBy))
 
-            for iGroupIndex, oSingleTupla in enumerate(vvFullTupleSet) :
+            for ii in rStep :
+                                                
+                for oSingleTupla in vvFullTupleSet :
 
-                vAggrValues = []
+                    vAggrValues = []
 
-                for oAggr in self.m_voAggregate :
-                    vAggrValues.append(oAggr.GetValue(iGroupIndex))
+                    iGroupIndex += 1
 
-                # oSingleTupla.append(vAggrValues)
-
-                if bExternValue :
-
-                    oSingleTupla[self.THIS_AGGR] = vAggrValues
-
-                else :
+                    for oAggr in self.m_voAggregate :
+                        vAggrValues.append(oAggr.GetValue(iGroupIndex))
                     
-                    oSingleTupla.extend([[], [], vAggrValues])
+                    if bExternValue :
+
+                        oSingleTupla[self.THIS_AGGR] = vAggrValues
+
+                    else :
+                        
+                        oSingleTupla.extend([[], [], vAggrValues])
 
         else :
 
@@ -880,7 +1039,7 @@ class SqlSelect:
 
             vvFullTupleSet = self._makeAllTuples(vvMatrixRecords)
 
-        if vvFullTupleSet == None :
+        if vvFullTupleSet is None :
             return None
 		
         if self.m_voCase :
@@ -912,7 +1071,7 @@ class SqlSelect:
                     
                     oValue = oExp.Evalute(oSingleFullTupla)
                     
-                    if oValue == None :
+                    if oValue is None :
                         return None
 
                     vExpValue.append(oValue)
@@ -929,46 +1088,13 @@ class SqlSelect:
 
             bExternValue = True
         				
-        vGroupBy = []
-        
-        if self.m_vGroupBy :
-                                            
-            vGroupFullTuple = []
-            
-            for oSingleFullTupla in vvFullTupleSet:
                 
-                vGroupingValues = []
+        if self.m_vvGroupBy :
 
-                for oKeys in self.m_vGroupBy :
-                    
-                    iTabIndex = oKeys.GetIndex()
-                    iColIndex = oKeys.GetColumn()
-
-                    oValue = oSingleFullTupla[iTabIndex][iColIndex]
-
-                    if oValue == 'NULL' :
-                        break
-
-                    vGroupingValues.append(oValue)
-                
-                else :
-
-                    for iGroup, oValue in enumerate(vGroupBy) :
-                        if vGroupingValues == oValue :
-                            iGroupIndex = iGroup
-                            break
-                    else :
-                        
-                        iGroupIndex = len(vGroupBy)
-                        vGroupBy.append(vGroupingValues)
-
-                        vGroupFullTuple.append(oSingleFullTupla)
-
-                    if self.m_voAggregate :
-                        for oAggrFunc in self.m_voAggregate :
-                            oAggrFunc.Evalute(oSingleFullTupla, iGroupIndex) 
-
-            vvFullTupleSet = vGroupFullTuple 
+            if len(self.m_vvGroupBy) == 1 :
+                vvFullTupleSet = self._GroupByManager(vvFullTupleSet)
+            else :
+                vvFullTupleSet = self._GroupingSetsManager(vvFullTupleSet)
         
         else :
 

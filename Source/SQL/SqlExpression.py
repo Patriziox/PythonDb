@@ -517,19 +517,19 @@ class SqlExp:
 			
             oResult = self._evalute(oNodo.m_pLeft, vvValue)
             
-            if oResult == NULL :
-                return False
+            if oResult == None :
+                return None
 						            
-            return None if oResult == None else True
+            return (oResult != NULL)
 
         if oNodo.m_eType == enum_ExpType.eNull :
             
             oResult = self._evalute(oNodo.m_pLeft, vvValue)
             
-            if oResult == NULL :
-                return True
+            if oResult == None :
+                return None
 						            
-            return None if oResult == None else False
+            return (oResult == NULL)
 
         if oNodo.m_eType == enum_ExpType.eIn :
 
