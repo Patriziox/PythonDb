@@ -124,3 +124,27 @@ class SqlTables:
         
         return oTable
    
+    def GetColumn(self, sFullColName : str) -> SqlTable and SqlColumn :
+
+        vsSplit = sFullColName.split('.', 2)
+        
+        if len(vsSplit) == 2 :
+                        
+            for oTable in self.m_voTables :
+                if oTable.GetName() == vsSplit[0] :
+                    
+                    oCol = oTable.Column(vsSplit[1])
+
+                    if oCol :
+                        return oTable, oCol
+
+                    break
+        else :
+
+            for oTable in self.m_voTables :
+                oCol = oTable.Column(vsSplit[0])
+
+                if oCol :
+                    return oTable, oCol
+
+        return None, None

@@ -80,11 +80,16 @@ class TestSqlSelect(unittest.TestCase) :
             # ('001', 'Test_011'),
             # ('001', 'Test_012'),
             # ('001', 'Test_013'),
+            # ('Union', 'Test_001'),
+            # ('Union', 'Test_002'),
             # ('GroupBy', 'Test_001'),
             # ('GroupBy', 'Test_002'),
-            ('GroupBy', 'Test_003'),
-            ('GroupBy', 'Test_004'),
-            ('Union', 'Test_001'),
+            # ('GroupBy', 'Test_003'),
+            # ('GroupBy', 'Test_004'),
+            # ('GroupBy', 'Test_005'),
+            # ('GroupBy', 'Test_006'),
+            ('GroupBy', 'Test_007'),
+           
 
         )
 

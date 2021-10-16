@@ -1,4 +1,3 @@
-from genericpath import samefile
 from enum import Enum, unique
 
 from SQL.SqlRecord import *
@@ -18,12 +17,6 @@ class enum_JoinMode(Enum):
     eLeft = 2
     eRight = 3
     eFull = 4
-    
-@unique
-class enum_SqlSelectExpType(Enum):
-    eExpression = -3
-    eCase = -2
-    eAggregate = -1
 
 @unique
 class enum_SqlMultiSelectType(Enum):
@@ -33,14 +26,6 @@ class enum_SqlMultiSelectType(Enum):
      
 class SqlSelect:
    
-    THIS_TABLE = 0
-    THIS_COL = 1
-    THIS_DATATYPE = 3
-
-    THIS_EXP = -3
-    THIS_CASE = -2
-    THIS_AGGR = -1
-     
     st_tSelectClause = (
         (' WHERE EXISTS ', '_WhereExistsParser', None),
         (' WHERE ', '_WhereParser', None),
@@ -79,7 +64,7 @@ class SqlSelect:
         self.m_voOrderBy = []
         self.m_voAggregate = []
         self.m_voExpression = []
-        self.m_vvsSelectedCols = []
+        self.m_voSelectedCols = []
         self.m_iLimit = None
         self.m_veJoinMode = []
         self.m_voJoinRule = []
@@ -168,10 +153,22 @@ class SqlSelect:
 
         if not self._columnsManager(vsCols, oSchema) :
             return None
-        
+                
         oSchema.Extend(self.m_oSchema)
         self.m_oSchema = oSchema
-	
+
+        # nel 'GROUPING BY SETS' le colonne devono essere dichiarate nella clausola 'SELECT'
+        if len(self.m_vvGroupBy) > 1 :
+            for oSchema in self.m_vvGroupBy :
+                for oSchemaItem1 in oSchema :
+                    for oSchemaItem2 in self.m_voSelectedCols :
+                        if oSchemaItem1 == oSchemaItem2 :
+                            break
+
+                    else :
+
+                        return None
+
         for oExp in self.m_voExpression :
             if not oExp.Parse(None, self.m_oSchema, True) :
                 return None
@@ -197,7 +194,6 @@ class SqlSelect:
 
             for oNode in oWhereClause.GetNodes() : # nella clausola where non è ammessa una funzione di aggragazione
                 if oNode.GetAggrType() != None :
-                    
                     self.m_oError = SqlError(enum_Error.eClauseVioletion, f'Impossible to define "Aggregate function" in "WHERE" clause')
                     return None
                 
@@ -312,8 +308,13 @@ class SqlSelect:
 
                 vsSingleTableColNames = oTable.GetColsName(bFullName = True)
 
-                for sName in vsSingleTableColNames :
-                    self.m_vvsSelectedCols.append((sName, None, ))
+                oCol : SqlColumn
+
+                for oCol in oTable.Columns() :
+                    
+                    oSchemaItem = SqlSchemaItem(enum_SqlSchemaType.eColumn, oTable.GetIndex(), oCol.GetIndex(), None, oCol.GetType(), sTableName, oCol.GetName(), f'{sTableName}.{oCol.GetName()}')
+                    
+                    self.m_voSelectedCols.append(oSchemaItem)
 
                 vsAllColNames.extend(vsSingleTableColNames)
         else:
@@ -330,9 +331,11 @@ class SqlSelect:
                         return None
 
                     for iIndex, oCase in enumerate(self.m_voCase) :
-                        self.m_vvsSelectedCols.append((oCase.GetAlias(), oCase.GetAlias(), ))
+                        
+                        oSchemaItem = SqlSchemaItem(enum_SqlSchemaType.eCase, -1, iIndex, enum_SqlSchemaType.eCase.value, enum_DataType.eNone, None, None, oCase.GetAlias())
 
-                        vsAllColNames.append(SqlSchemaItem(-1, iIndex, enum_SqlSelectExpType.eCase.value, enum_SqlSelectExpType.eCase))
+                        self.m_voSelectedCols.append(oSchemaItem)
+                        vsAllColNames.append(oSchemaItem)
 
                     continue
 
@@ -347,10 +350,30 @@ class SqlSelect:
                     if Gen.IsColumn(sColName) :
 						
                         vsAllColNames.append(sColName)
-					
+                        
+                        oTable, oCol = self.m_oTables.GetColumn(sColName)
+
+                        if not oTable :
+                            return None
+                        
+                        oTable : SqlTable
+                        oCol : SqlColumn
+
+                        self.m_voSelectedCols.append(
+                                                    SqlSchemaItem(enum_SqlSchemaType.eColumn, 
+                                                            oTable.GetIndex() , 
+                                                            oCol.GetIndex(), 
+                                                            None, oCol.GetType(), 
+                                                            oTable.GetName(), 
+                                                            oCol.GetName(), 
+                                                            sAlias if sAlias else sColName)
+                                                    )
+                    
                     else :
-					                        
-                        vsAllColNames.append(SqlSchemaItem(-1, len(self.m_voExpression), enum_SqlSelectExpType.eExpression.value, enum_SqlSelectExpType.eExpression, sText, sAlias))
+					    
+                        oSchemaItem = SqlSchemaItem(enum_SqlSchemaType.eExpression, -1, len(self.m_voExpression), enum_SqlSchemaType.eExpression.value, enum_DataType.eNone, sText, sAlias)
+
+                        vsAllColNames.append(oSchemaItem)
                         
                         oSqlExp = SqlExp(sColName)
 
@@ -359,9 +382,9 @@ class SqlSelect:
                         self.m_voExpression.append(oSqlExp)
                         
                         vsExpCols.extend(vCols)
-                         
-                    self.m_vvsSelectedCols.append((sColName, sAlias, ))
-					
+                        
+                        self.m_voSelectedCols.append(oSchemaItem)
+
                 else :
 
                     sNop, sArgs, sFoot = Gen.FunctionParser('NOP' + sFoot)
@@ -377,7 +400,9 @@ class SqlSelect:
                     
                     sColName = Gen.Normalize(sText)
 
-                    vsAllColNames.append(SqlSchemaItem(-1, len(self.m_voAggregate), enum_SqlSelectExpType.eAggregate.value, enum_SqlSelectExpType.eAggregate, sColName, sAlias))
+                    oSchemaItem = SqlSchemaItem(enum_SqlSchemaType.eAggregate, -1, len(self.m_voAggregate), enum_SqlSchemaType.eAggregate.value, enum_DataType.eNone, None, sColName, sAlias)
+
+                    vsAllColNames.append(oSchemaItem)
                                         
                     if bExistAlias :
                         oAggregate.SetAlias(sAlias)
@@ -386,15 +411,17 @@ class SqlSelect:
                     oAggregate.SetText(sColName)
                     
                     self.m_voAggregate.append(oAggregate)
-                    self.m_vvsSelectedCols.append((sColName, sAlias, ))
+                    self.m_voSelectedCols.append(oSchemaItem)
 
             for sTableName in self.m_vTablesName :
                 
+                oTable : SqlTable
+
                 oTable = self.m_oTables.GetTable(sTableName)
 
                 if not oTable :
                     return None
-
+               
                 vsSingleTableColNames = oTable.GetColsName(bFullName = True)
                 
                 for sColName in vsSingleTableColNames :
@@ -494,7 +521,7 @@ class SqlSelect:
 
                     self.m_voColumns.append(oColumn)
 
-                    oSchema.Append(SqlSchemaItem(oTable.GetIndex(), oColumn.GetIndex(), iIndex, oColumn.GetType(), sThisTableName, sColName, sAlias))
+                    oSchema.Append(SqlSchemaItem(enum_SqlSchemaType.eColumn, oTable.GetIndex(), oColumn.GetIndex(), iIndex, oColumn.GetType(), sThisTableName, sColName, sAlias))
         
         return True
     
@@ -552,12 +579,9 @@ class SqlSelect:
         
         for sColName in vsColums:
             
-            oTupla = oTableKeys.GetKeys(sColName)
-
-            if not oTupla :
-                return False, None, None, None
-
-            vvGroupBy.append(oTupla)
+            oSchemaItem = oTableKeys.GetKeys(sColName)
+            
+            vvGroupBy.append(oSchemaItem)
         
         self.m_vvGroupBy = [vvGroupBy]
 		
@@ -989,7 +1013,7 @@ class SqlSelect:
                     
                     if bExternValue :
 
-                        oSingleTupla[self.THIS_AGGR] = vAggrValues
+                        oSingleTupla[enum_SqlSchemaType.eAggregate] = vAggrValues
 
                     else :
                         
@@ -1008,7 +1032,7 @@ class SqlSelect:
 
                 if bExternValue :
 
-                    oSingleTupla[self.THIS_AGGR] = vAggrValues
+                    oSingleTupla[enum_SqlSchemaType.eAggregate] = vAggrValues
 
                 else :
                     
@@ -1025,8 +1049,11 @@ class SqlSelect:
 
         bExternValue = False
 
-        for iIndex, vName in enumerate(self.m_vvsSelectedCols) :
-            vsLabels.append(vName[1] if vName[1] else vName[0])
+        oSchemaItem : SqlSchemaItem
+
+        for iIndex, oSchemaItem in enumerate(self.m_voSelectedCols) :
+            
+            vsLabels.append(oSchemaItem.GetAlias() if oSchemaItem.GetAlias() else oSchemaItem.GetColName())
             oSchema.Append(self.m_oSchema[iIndex])
        
         oTuple = SqlTuple(vsLabels, oSchema)
@@ -1080,7 +1107,7 @@ class SqlSelect:
 
                 if bExternValue :
 
-                    oSingleFullTupla[self.THIS_EXP] = vExpValue
+                    oSingleFullTupla[enum_SqlSchemaType.eExpressione] = vExpValue
                 
                 else :
                     
@@ -1124,7 +1151,7 @@ class SqlSelect:
         # SELECT CLAUSE
         vSelectedTuple = []
        
-        viFieldsRange = range(len(self.m_vvsSelectedCols))
+        viFieldsRange = range(len(self.m_voSelectedCols))
         
         iQntItems = 0
  
@@ -1451,7 +1478,7 @@ class SqlSelect:
 
         return vResult
 	
-    def _sortCompare(self, it1, it2, iResult : int) -> int :
+    def _sortCompareRule(self, it1, it2, iResult : int) -> int :
 		
         if isinstance(it1, SqlNull) :
             return -iResult
@@ -1488,7 +1515,7 @@ class SqlSelect:
             iTable = oSchema.GetIndex()
             iColumn = oSchema.GetColumn()
 									
-            iCompareResult = self._sortCompare(item[iTable][iColumn], vSource[iTable][iColumn], viSortingMode[iIndex])
+            iCompareResult = self._sortCompareRule(item[iTable][iColumn], vSource[iTable][iColumn], viSortingMode[iIndex])
 			
             if iCompareResult == -1 :
                 break
@@ -1519,7 +1546,7 @@ class SqlSelect:
             iTable = oSchema.GetIndex()
             iColumn = oSchema.GetColumn()
 			
-            iCompareResult = self._sortCompare(item[iTable][iColumn], vSource[iTable][iColumn], viSortingMode[iIndex])
+            iCompareResult = self._sortCompareRule(item[iTable][iColumn], vSource[iTable][iColumn], viSortingMode[iIndex])
 			
             if iCompareResult == -1 :
                 bDoInsert = False
@@ -1556,7 +1583,7 @@ class SqlSelect:
                 iTable = oSchema.GetIndex()
                 iColumn = oSchema.GetColumn()
 				
-                iCompareResult = self._sortCompare(item[iTable][iColumn], vSource[iTable][iColumn], viSortingMode[iIndex])
+                iCompareResult = self._sortCompareRule(item[iTable][iColumn], vSource[iTable][iColumn], viSortingMode[iIndex])
 								
                 if iCompareResult == 1 :
                     iLo = iMid + 1

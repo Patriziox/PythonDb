@@ -602,7 +602,7 @@ class SqlExp:
                     return False
 
                 oNode.m_oItem = (sColName, iTableIndex, oSchemaItem.GetColumn())
-                oNode.m_eDataType = oSchemaItem.GetType()
+                oNode.m_eDataType = oSchemaItem.GetDataType()
             
             else :
 

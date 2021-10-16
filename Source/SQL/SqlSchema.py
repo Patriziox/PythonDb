@@ -1,18 +1,44 @@
+from enum import Enum, unique
 from SqlGlobals import enum_DataType
+
+@unique
+class enum_SqlSchemaType(Enum):
+    eColumn = 0
+    
+    eExpression = -3
+    eCase = -2
+    eAggregate = -1
+
 
 class SqlSchemaItem :
 
-    def __init__(self, iTableUid : int, iColumn : int, iIndex : int, eType : enum_DataType, sTableName  : str = None, sColName  : str = None, sAlias : str = None) :
+    def __init__(self, eType : enum_SqlSchemaType, iTableUid : int, iColumn : int, iIndex : int, eDataType : enum_DataType, sTableName : str = None, sColName  : str = None, sAlias : str = None) :
 
-        self.m_iTableUid = iTableUid
-        self.m_iColumn = iColumn
-        self.m_iIndex = iIndex
-        self.m_eType = eType
+        self.m_eType        = eDataType
+        self.m_iTableUid    = iTableUid
+        self.m_iColumn      = iColumn
+        self.m_iIndex       = iIndex
+        self.m_eDataType    = eDataType
         
-        self.m_sTableName = sTableName
-        self.m_sColName = sColName
-        self.m_sAlias = sAlias
+        self.m_sTableName   = sTableName
+        self.m_sColName     = sColName
+        self.m_sAlias       = sAlias
 
+    def __eq__(self, item : 'SqlSchemaItem') -> bool:
+        if not isinstance(item , SqlSchemaItem) :
+            return False
+
+        return (self.m_iTableUid == item.m_iTableUid) and (self.m_iColumn == item.m_iColumn)
+
+    def __ne__(self, item : 'SqlSchemaItem') -> bool:
+        if not item :
+            return True
+
+        return (self.m_iTableUid != item.m_iTableUid) or (self.m_iColumn != item.m_iColumn)
+
+    def GetType(self) -> enum_SqlSchemaType :
+        return self.m_eType
+    
     def GetTableUid(self) -> int :
         return self.m_iTableUid
 
@@ -22,8 +48,8 @@ class SqlSchemaItem :
     def GetIndex(self) -> int :
         return self.m_iIndex
     
-    def GetType(self) -> enum_DataType :
-        return self.m_eType
+    def GetDataType(self) -> enum_DataType :
+        return self.m_eDataType
     
     def GetTableName(self) -> str :
         return self.m_sTableName

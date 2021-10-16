@@ -7,9 +7,12 @@ class SqlColKeys:
 
     def __init__(self) -> None:
         self.m_doColKeys = dict()
-    
+
+    def __iter__(self) :
+        return iter(self.m_doColKeys.values())
+
     def Update(self, sColName : str, iTableUid : int, iColIndex : int, eDataType : enum_DataType) -> None:
-        self.m_doColKeys.update({sColName : SqlSchemaItem(iTableUid, iColIndex, None, eDataType) })
+        self.m_doColKeys.update({sColName : SqlSchemaItem(enum_SqlSchemaType.eColumn, iTableUid, iColIndex, None, eDataType) })
 
     def GetKeys(self, sColName : str) -> SqlSchema:
         return self.m_doColKeys.get(sColName)
@@ -22,17 +25,9 @@ class SqlColKeys:
 
         for key, item in self.m_doColKeys.items() :
             
-            doColKeys.update({key : SqlSchemaItem(iTableUid, item.GetColumn(), item.GetIndex(), item.GetType())})
+            doColKeys.update({key : SqlSchemaItem(enum_SqlSchemaType.eColumn, iTableUid, item.GetColumn(), item.GetIndex(), item.GetType())})
 
         self.m_doColKeys = doColKeys
-
-    # def Serialize(self) -> bytes:
-        
-    #     pickle.dumps(self.m_doColKeys)
-    #     # return self.m_doColKeys
-
-    # def Unserialize(self, doColKeys : dict) -> None:
-    #     self.m_doColKeys = doColKeys
 
 class SqlTableKeys:
 
@@ -43,7 +38,10 @@ class SqlTableKeys:
         self.m_doTableKeys.pop(sTableName, None)
         self.m_doTableKeys.update({sTableName : oColKeys})
 
-    def GetKeys(self, sFullColName : str) -> SqlSchema:
+    def GetTableKeys(self, sTableName) -> SqlColKeys:
+        return self.m_doTableKeys.get(sTableName)
+
+    def GetKeys(self, sFullColName : str) -> SqlSchemaItem:
 
         vSplit = sFullColName.split('.')
 
