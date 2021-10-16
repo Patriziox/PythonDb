@@ -1,0 +1,27 @@
+{
+    "query" : "select individuo.uidCitta, peso from individuo GROUP BY GROUPING SETS (individuo.uidCitta), (peso)",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UIDCITTA", "PESO"],
+    "tuples" : [
+
+        [1,"NULL"],
+        [2,"NULL"],
+        [3,"NULL"],
+        [4,"NULL"],
+        ["NULL","NULL"],
+        ["NULL", 85],
+        ["NULL", 42],
+        ["NULL", 59],
+        ["NULL", 102],
+        ["NULL", 78],
+        ["NULL", 54],
+        ["NULL", 90],
+        ["NULL", 77],
+        ["NULL", 45],
+        ["NULL", 117],
+        ["NULL", 35],
+        ["NULL","NULL"]
+    ]
+}
