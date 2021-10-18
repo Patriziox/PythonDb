@@ -75,3 +75,13 @@ Source/__pycache__/SqlGeneric.cpython-37.pyc
 Source/__pycache__/SqlGlobals.cpython-37.pyc
 .gitignore
 .gitignore
+Source/Shell/__pycache__/SqlShell.cpython-310.pyc
+Source/TCP_IP/__pycache__/DbUser.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpCliHandler.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpCommands.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpServer.cpython-310.pyc
+Source/TCP_IP/__pycache__/DbUser.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpCliHandler.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpCommands.cpython-310.pyc
+Source/TCP_IP/__pycache__/TcpServer.cpython-310.pyc
+Document/table.txt
