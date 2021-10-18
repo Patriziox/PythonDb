@@ -26,6 +26,9 @@ class enum_SqlMultiSelectType(Enum):
      
 class SqlSelect:
    
+    THIS_GROUPBY_QNT_TUPLE = 0
+    THIS_GROUPBY_RULE = 1
+
     st_tSelectClause = (
         (' WHERE EXISTS ', '_WhereExistsParser', None),
         (' WHERE ', '_WhereParser', None),
@@ -159,7 +162,7 @@ class SqlSelect:
 
         # nel 'GROUPING BY SETS' le colonne devono essere dichiarate nella clausola 'SELECT'
         if len(self.m_vvGroupBy) > 1 :
-            for oSchema in self.m_vvGroupBy :
+            for iNop, oSchema in self.m_vvGroupBy :
                 for oSchemaItem1 in oSchema :
                     for oSchemaItem2 in self.m_voSelectedCols :
                         if oSchemaItem1 == oSchemaItem2 :
@@ -217,8 +220,10 @@ class SqlSelect:
         
         if self.m_vvGroupBy :
             
-            for iIndex, vGroupRule in enumerate(self.m_vvGroupBy) :
+            for iIndex, vGroupItem in enumerate(self.m_vvGroupBy) :
 				
+                vGroupRule = vGroupItem[SqlSelect.THIS_GROUPBY_RULE]
+
                 vGroupBy = []
                 
                 for oGroupCol in vGroupRule :
@@ -232,7 +237,7 @@ class SqlSelect:
 
                         return None
 				
-                self.m_vvGroupBy[iIndex] = vGroupBy
+                self.m_vvGroupBy[iIndex] = [0, vGroupBy]
 
         if self.m_voOrderBy :
             if not self._OrderByManager() :
@@ -583,15 +588,15 @@ class SqlSelect:
             
             vvGroupBy.append(oSchemaItem)
         
-        self.m_vvGroupBy = [vvGroupBy]
-		
+        self.m_vvGroupBy = [[0, vvGroupBy]]
+        		
         return True, iIndexHnd, sFoot, oHandler
 
     def _GroupByManager(self, vvFullTupleSet : list) -> list:
 
         vGroupBy = []
 
-        vGroupByRule = self.m_vvGroupBy[0]
+        vGroupByRule = self.m_vvGroupBy[0][SqlSelect.THIS_GROUPBY_RULE]
 
         vGroupFullTuple = []
         
@@ -628,6 +633,8 @@ class SqlSelect:
                     for oAggrFunc in self.m_voAggregate :
                         oAggrFunc.Evalute(oSingleFullTupla, iGroupIndex) 
 
+        self.m_vvGroupBy[0][SqlSelect.THIS_GROUPBY_QNT_TUPLE] = len(vGroupFullTuple)
+
         return vGroupFullTuple 
     
     def _GroupingSetsParser(self, sQuery : str) :
@@ -658,14 +665,14 @@ class SqlSelect:
 
                 vGroupBy.append(oTupla)
         
-            vvGroupBy.append(vGroupBy)
+            vvGroupBy.append([0, vGroupBy])
         
         self.m_vvGroupBy = vvGroupBy
                 
         return True, iIndexHnd, sFoot, oHandler
 
     def _GroupingSetsManager(self, vvFullTupleSet : list) -> list:
-        
+              
         vvGroupBy = [None] * len(self.m_vvGroupBy)
         vvGroupFullTuple = [None] * len(self.m_vvGroupBy)
         
@@ -677,8 +684,10 @@ class SqlSelect:
 
         for oSingleFullTupla in vvFullTupleSet :
             
-            for iThisGroupSet, vGroupRule in enumerate(self.m_vvGroupBy) :
-            
+            for iThisGroupSet, vGroupItem in enumerate(self.m_vvGroupBy) :
+                
+                vGroupRule = vGroupItem[SqlSelect.THIS_GROUPBY_RULE]
+
                 vGroupingValues = []
 
                 oSingleGroupingTupla = deepcopy(oTuplaBase)
@@ -700,7 +709,7 @@ class SqlSelect:
                 else :
                     
                     if vvGroupBy[iThisGroupSet] is None :
-                        
+                                                
                         vvGroupBy[iThisGroupSet] = [vGroupingValues]
                         vvGroupFullTuple[iThisGroupSet] = [oSingleGroupingTupla]
                         iGroupIndex = 0
@@ -718,15 +727,22 @@ class SqlSelect:
                         
                     if self.m_voAggregate :
                         for oAggrFunc in self.m_voAggregate :
-                            oAggrFunc.Evalute(oSingleGroupingTupla, iGroupIndex) 
-
+                            oAggrFunc.Evalute(oSingleFullTupla, iGroupIndex, iThisGroupSet) 
+     
+        # vvFullTupleSet = []
         
-        vvFullTupleSet = []
-        
-        for vGroup in vvGroupFullTuple :
-            vvFullTupleSet.extend(vGroup)
+        # for vGroup in vvGroupFullTuple :
+        #     vvFullTupleSet.extend(vGroup)
 
-        return vvFullTupleSet
+        vvFullTupleResult = []
+        
+        for iRuleIndex, vGroup in enumerate(vvGroupFullTuple) :
+
+            self.m_vvGroupBy[iRuleIndex][SqlSelect.THIS_GROUPBY_QNT_TUPLE] = len(vGroup)
+                            
+            vvFullTupleResult.extend(vGroup)
+
+        return vvFullTupleResult
 
     def _OrderByParser(self, sQuery : str):
 
@@ -995,29 +1011,37 @@ class SqlSelect:
     def _AggregateFunc(self, vvFullTupleSet : list, bExternValue : bool) :
         
         if self.m_vvGroupBy :
-			
-            iGroupIndex = -1
-            
+			                        
+            iIndexTupla = -1
+
             rStep = range(len(self.m_vvGroupBy))
 
             for ii in rStep :
-                                                
-                for oSingleTupla in vvFullTupleSet :
+                
+                rThisGroupTuple = range(self.m_vvGroupBy[ii][SqlSelect.THIS_GROUPBY_QNT_TUPLE])
+                
+                iGroupIndex = -1
+
+                for jj in rThisGroupTuple :
 
                     vAggrValues = []
 
                     iGroupIndex += 1
+                    iIndexTupla += 1
 
                     for oAggr in self.m_voAggregate :
-                        vAggrValues.append(oAggr.GetValue(iGroupIndex))
+                        vAggrValues.append(oAggr.GetValue(iGroupIndex, ii))
                     
                     if bExternValue :
 
-                        oSingleTupla[enum_SqlSchemaType.eAggregate] = vAggrValues
+                        vvFullTupleSet[iIndexTupla][enum_SqlSchemaType.eAggregate] = vAggrValues
 
                     else :
                         
-                        oSingleTupla.extend([[], [], vAggrValues])
+                        vvFullTupleSet[iIndexTupla].extend([[], [], vAggrValues])
+
+                
+
 
         else :
 
