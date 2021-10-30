@@ -14,6 +14,7 @@ from SqlGlobals import enum_TcpToken
 
 @unique
 class enum_TestMode(Enum):
+    eNoCheck = 'nocheck'
     eCheck = 'check'
     eCheckSorted = 'checksorted'
     
@@ -69,26 +70,28 @@ class TestSqlSelect(unittest.TestCase) :
     def test_Select(self) :
        
         tQuery = (
-            ('001', 'Test_001'),
-            ('001', 'Test_002'),
-            ('001', 'Test_003'),
-            ('001', 'Test_004'),
-            ('001', 'Test_006'),
-            ('001', 'Test_007'),
-            ('001', 'Test_008'),
-            ('001', 'Test_009'),
-            ('001', 'Test_011'),
-            ('001', 'Test_012'),
-            ('001', 'Test_013'),
-            ('Union', 'Test_001'),
-            ('Union', 'Test_002'),
-            ('GroupBy', 'Test_001'),
-            ('GroupBy', 'Test_002'),
-            ('GroupBy', 'Test_003'),
-            ('GroupBy', 'Test_004'),
-            ('GroupBy', 'Test_005'),
-            ('GroupBy', 'Test_006'),
-            ('GroupBy', 'Test_007'),
+            # ('001', 'Test_001'),
+            # ('001', 'Test_002'),
+            # ('001', 'Test_003'),
+            # ('001', 'Test_004'),
+            # ('001', 'Test_006'),
+            # ('001', 'Test_007'),
+            # ('001', 'Test_008'),
+            # ('001', 'Test_009'),
+            # ('001', 'Test_011'),
+            # ('001', 'Test_012'),
+            # ('001', 'Test_013'),
+            # ('Union', 'Test_001'),
+            # ('Union', 'Test_002'),
+            # ('GroupBy', 'Test_001'),
+            # ('GroupBy', 'Test_002'),
+            # ('GroupBy', 'Test_003'),
+            # ('GroupBy', 'Test_004'),
+            # ('GroupBy', 'Test_005'),
+            # ('GroupBy', 'Test_006'),
+            # ('GroupBy', 'Test_007'),
+            # ('GroupBy', 'Test_008'),
+            ('GroupBy', 'Test_009'),
            
 
         )
@@ -133,58 +136,87 @@ class TestSqlSelect(unittest.TestCase) :
 
                 print(oSqlTuple.GetLabels())
                 
-                if sCheckMode == enum_TestMode.eCheck.value :
-										
-                    self.assertEqual(len(oSqlTuple.GetTuples()), len(jsonTuple))
-					     
-                    for oTupla in oSqlTuple.GetTuples() :
-                   
-                        print(oTupla)
-                        
-                        vTupla = self._parseTupla(oTupla)
-
-                        self.assertIn(vTupla, jsonTuple)
-
-                elif sCheckMode == enum_TestMode.eCheckSorted.value :
-					
-                    iIndex = 0
-                    vTuple = oSqlTuple.GetTuples()
-                    iQntTuple = len(vTuple)
+                match sCheckMode :
                     
-                    for jTupla in jsonTuple :
-                        
-                        if isinstance(jTupla, dict) :
+                    case enum_TestMode.eCheck.value :
+
+                        vbDbCheck = [False] * len(oSqlTuple.GetTuples())
+                        vbJsonCheck = [False] * len(jsonTuple)
+
+                        for iIndex1, oTupla in enumerate(oSqlTuple.GetTuples()) :
+                    
+                            print(oTupla)
                             
-                            vjTuple = jTupla['data']
-                        
-                        else :
-                            
-                            vjTuple = [jTupla]
-                        
-                        rStep = range(len(vjTuple))
-                        
-                        for hh in rStep :
-                            
-                            self.assertLess(iIndex, iQntTuple)
-                            
-                            print(vTuple[iIndex])
-                            
-                            vTupla = self._parseTupla(vTuple[iIndex])
-                            
-                            for ii in rStep :
-                            
-                                if vTupla == vjTuple[ii] :
+                            vTupla = self._parseTupla(oTupla)
+
+                            for iIndex2, jsonTupla in enumerate(jsonTuple) :
+                                if not vbJsonCheck[iIndex2] and vTupla == jsonTupla :
                                     
-                                    vjTuple[ii] = None
+                                    vbDbCheck[iIndex1] = True
+                                    vbJsonCheck[iIndex2] = True
                                     break
+                        
+                        bFailure = False  
+                        
+                        for iIndex1, bState in enumerate(vbDbCheck) :
+                            if not bState :
+                                print('Unaspected : ', oSqlTuple.GetTuples()[iIndex1])
+                                bFailure = True 
+
+                        for iIndex1, bState in enumerate(vbJsonCheck) :
+                            if not bState :
+                                print('Missing : ', jsonTuple[iIndex1])
+                                bFailure = True 
+
+
+                        self.assertFalse(bFailure)
+
+                    case enum_TestMode.eCheckSorted.value :
+                            
+                        iIndex = 0
+                        vTuple = oSqlTuple.GetTuples()
+                        iQntTuple = len(vTuple)
+                        
+                        for jTupla in jsonTuple :
+                            
+                            if isinstance(jTupla, dict) :
+                                
+                                vjTuple = jTupla['data']
+                            
                             else :
                                 
-                                self.fail(f'{vTupla} not found')
+                                vjTuple = [jTupla]
                             
-                            iIndex += 1
-                            					
-                    self.assertEqual(iIndex, iQntTuple)
-					
+                            rStep = range(len(vjTuple))
+                            
+                            for hh in rStep :
+                                
+                                self.assertLess(iIndex, iQntTuple)
+                                
+                                print(vTuple[iIndex])
+                                
+                                vTupla = self._parseTupla(vTuple[iIndex])
+                                
+                                for ii in rStep :
+                                
+                                    if vTupla == vjTuple[ii] :
+                                        
+                                        vjTuple[ii] = None
+                                        break
+                                else :
+                                    
+                                    self.fail(f'{vTupla} not found')
+                                
+                                iIndex += 1
+                                                    
+                        self.assertEqual(iIndex, iQntTuple)
+                    
+                    case enum_TestMode.eNoCheck.value :
+                        
+                        for oTupla in oSqlTuple.GetTuples() :
+                        
+                            print(oTupla)
+
                 print('Tuple: #', len(oSqlTuple.GetTuples()))
 
             self.assertEqual(eResult, enum_TcpToken.eReplyTuple, '\n' + tItem[0] + '\n' + sMsg)

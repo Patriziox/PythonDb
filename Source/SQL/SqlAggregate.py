@@ -1,3 +1,4 @@
+from typing import Tuple
 from SQL.SqlExpression import *
 
 class SqlAggregateItem :
@@ -82,8 +83,10 @@ class SqlAggregateItem :
                 oResult = self.m_vValue[iIndex] / self.m_viQntRow[iIndex]
        
         return oResult
-        
 
+    def GetRollUp(self, iIndex : int) -> Tuple[int, any] :
+        return (self.m_viQntRow[iIndex], self.m_vValue[iIndex], )
+      
 
 class SqlAggregate :
     
@@ -115,6 +118,9 @@ class SqlAggregate :
     def GetText(self) -> str :
         return self.m_sText
 
+    def GetType(self) -> enum_AggregateFunc :
+        return self.m_eAggrFunc
+
     def SetAlias(self, sAlias : str) :
         self.m_sAlias = sAlias
 
@@ -141,5 +147,7 @@ class SqlAggregate :
 
 
     def GetValue(self, iIndex : int, iSingleAggregate : int = 0) :
-        
         return self.m_voAggregate[iSingleAggregate].GetValue(self.m_eAggrFunc, iIndex)
+
+    def GetRollUp(self, iIndex : int, iSingleAggregate : int = 0) -> Tuple[int, any] :
+        return self.m_voAggregate[iSingleAggregate].GetRollUp(iIndex)

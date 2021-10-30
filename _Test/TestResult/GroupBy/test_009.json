@@ -1,0 +1,25 @@
+{
+    "query" : "select individuo.uidCitta, (peso % 2) as MODPESO, sum(individuo.eta) as ETA from individuo GROUP BY ROLLUP (individuo.uidCitta, MODPESO)",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UIDCITTA", "MODPESO", "ETA"],
+    "tuples" : [
+
+        ["NULL", 0, 12],
+        ["NULL", "NULL", 12],
+        [1, 0, 36],
+        [1, 1, 51],
+        [1, "NULL", 87],
+        [2, "NULL", 80],
+        [2, 1, 93],
+        [2, "NULL", 173],
+        [3, 0, 79],
+        [3, 1, 47],
+        [3, "NULL", 126],
+        [4, 0, 179],
+        [4, 1, 9],
+        [4, "NULL", 188],
+        ["NULL", "NULL", 586]
+    ]
+}

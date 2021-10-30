@@ -45,11 +45,11 @@ class SqlTableKeys:
 
         vSplit = sFullColName.split('.')
 
-        if(len(vSplit) == 2): # tab.col
+        if len(vSplit) == 2 : # tab.col
             
             oColKeys = self.m_doTableKeys.get(vSplit[0])
 
-            if(oColKeys == None):
+            if not oColKeys :
                 return None
 
             return oColKeys.GetKeys(vSplit[1])
@@ -62,10 +62,10 @@ class SqlTableKeys:
 
             oSqlSchema = oColKeys.GetKeys(vSplit[0])
 
-            if(oSqlSchema == None):
+            if not oSqlSchema :
                 continue
             
-            if(oResult != None):
+            if not oResult :
                 return None
 
             oResult = oSqlSchema

@@ -1,7 +1,7 @@
 import hashlib
 import random
 import binascii
-from typing import Generic
+from typing import Generic, Tuple
 
 class SqlGeneric:
 
@@ -18,14 +18,14 @@ class SqlGeneric:
         # da completare
     )
 
-    st_vsOper = [
-        '+', '-', '*', '/',
+    st_tsOper = (
+        '+', '-', '*', '/', '%',
         '=', '<', '>',
-        '&', '|'
-    ]
+        '&', '|',
+    )
 
     @staticmethod
-    def Normalize(oQuery : str or bytes):
+    def Normalize(oQuery : str | bytes) -> str:
         
         # l'interno dei doppi apici resta immutato
         # i caratteri sono maiuscoli
@@ -101,16 +101,16 @@ class SqlGeneric:
             elif ((ch >= 'a') and (ch <= 'z')):
                 ch = ch.upper()
 
-                if(cLastCh in SqlGeneric.st_vsOper):
+                if(cLastCh in SqlGeneric.st_tsOper):
                     sOut = f"{sOut} "
 
             elif ((ch >= 'A') and (ch <= 'Z')):
 
-                if(cLastCh in SqlGeneric.st_vsOper):
+                if(cLastCh in SqlGeneric.st_tsOper):
                     sOut = f"{sOut} "
 
             elif (ch >= '0') and (ch <= '9'):
-                if(cLastCh in SqlGeneric.st_vsOper):
+                if(cLastCh in SqlGeneric.st_tsOper):
                     sOut = f"{sOut} "
 
             cLastCh = ch
@@ -235,7 +235,7 @@ class SqlGeneric:
         return sFuncName, vArgs, sSource[iEnd + 1:].strip()
 
     @staticmethod
-    def RemoveTonde(sSource) -> str and bool:
+    def RemoveTonde(sSource) -> Tuple[str, bool]:
 
         sSource = sSource.strip()
         
@@ -298,7 +298,7 @@ class SqlGeneric:
         return None
 
     @staticmethod
-    def Split(sSource : str, sSplitStr : str) -> str and str and bool:
+    def Split(sSource : str, sSplitStr : str) -> Tuple[str, str, bool] :
 
         if not (isinstance(sSource, str) and isinstance(sSplitStr, str)) :
             return sSource, '', False
@@ -502,3 +502,36 @@ class SqlGeneric:
                return sSource[1 : -1]
 
         return sSource
+
+    @staticmethod
+    def CreatePermuta(vsSrc : list[str], sSep : str = ',') -> list[str] :
+        
+        iCntSrc = len(vsSrc)
+        iTotItems = pow(2, iCntSrc)
+        iStep = iTotItems 
+
+        vTargetTmp = [''] * iTotItems
+        viQntItems = [0] * iTotItems
+        
+        for hh in range(iCntSrc) :
+
+            iIndex = 0
+            iStep //= 2 
+
+            while iIndex < iTotItems :
+                for jj in range(iStep) :
+                    vTargetTmp[iIndex] = f'{vTargetTmp[iIndex]}{sSep}{vsSrc[hh]}' if vTargetTmp[iIndex] else vsSrc[hh]
+                    viQntItems[iIndex] += 1
+                    iIndex += 1
+                
+                iIndex += iStep
+        
+        vTarget = []
+
+        for iSize in range(iCntSrc, -1, -1) :
+            for jj in range(iTotItems) :
+                if viQntItems[jj] == iSize :
+                    vTarget.append(vTargetTmp[jj])
+        
+        return vTarget
+            

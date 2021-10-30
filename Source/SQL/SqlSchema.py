@@ -3,18 +3,20 @@ from SqlGlobals import enum_DataType
 
 @unique
 class enum_SqlSchemaType(Enum):
-    eColumn = 0
+    eEmpty = 0
+    eColumn = 1
     
-    eExpression = -3
-    eCase = -2
-    eAggregate = -1
+    eExpression = -4
+    eCase = -3
+    eAggregate = -2
+    eRollUp = -1
 
 
 class SqlSchemaItem :
 
     def __init__(self, eType : enum_SqlSchemaType, iTableUid : int, iColumn : int, iIndex : int, eDataType : enum_DataType, sTableName : str = None, sColName  : str = None, sAlias : str = None) :
 
-        self.m_eType        = eDataType
+        self.m_eType        = eType
         self.m_iTableUid    = iTableUid
         self.m_iColumn      = iColumn
         self.m_iIndex       = iIndex
@@ -101,3 +103,4 @@ class SqlSchema :
 
 
         return None
+   

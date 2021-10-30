@@ -37,6 +37,7 @@ class enum_ExpType(Enum):
     eNotBetween = auto()
     eBetween = auto()
     
+    eMod = auto()
     eMolty = auto()
     eDiv = auto()
     eSum = auto()
@@ -75,6 +76,7 @@ class SqlExpNode :
         (' < ', enum_ExpType.eLess),
         (' NOT BETWEEN ', enum_ExpType.eNotBetween),
         (' BETWEEN ', enum_ExpType.eBetween),
+        (' % ', enum_ExpType.eMod),
         (' * ', enum_ExpType.eMolty),
         (' / ', enum_ExpType.eDiv),
         (' + ', enum_ExpType.eSum),
@@ -122,62 +124,65 @@ class SqlExpNode :
                 continue
             
             self.m_eType = vToken[1]
+            
+            match self.m_eType :
 
-            if self.m_eType in (enum_ExpType.eCount, enum_ExpType.eAvg, ) :
-                self.m_eAggrType = vToken[2]
-                self.m_sText = sExpr.strip() 
+                case enum_ExpType.eCount | enum_ExpType.eAvg :
+
+                    self.m_eAggrType = vToken[2]
+                    self.m_sText = sExpr.strip() 
 			
-            elif self.m_eType == enum_ExpType.eSubQuery :
+                case enum_ExpType.eSubQuery :
                
-                if not bParentesiTonde : 
-                    return None
+                    if not bParentesiTonde : 
+                        return None
 
-                sHead, sFoot, bResult = Gen.Split(sExpr, ' SELECT ')
+                    sHead, sFoot, bResult = Gen.Split(sExpr, ' SELECT ')
 
-                if not bResult :
-                    return None
+                    if not bResult :
+                        return None
+                    
+                    self.m_sText = sFoot.strip() 
+
+                    sFoot = ''
+
+                    if isinstance(oParent.m_oValue, list) : 
+
+                        oParent.m_oValue = []
+                        self.m_eType = enum_ExpType.eSubQueryMulti
+
+                case enum_ExpType.eCase :
                 
-                self.m_sText = sFoot.strip() 
+                    self.m_sText, bParentesiTonde = Gen.RemoveTonde(sFoot)
+                    
+                    if not bParentesiTonde : 
+                        return None
 
-                sFoot = ''
-
-                if isinstance(oParent.m_oValue, list) : 
-
-                    oParent.m_oValue = []
-                    self.m_eType = enum_ExpType.eSubQueryMulti
-
-            elif self.m_eType == enum_ExpType.eCase :
-                
-                self.m_sText, bParentesiTonde = Gen.RemoveTonde(sFoot)
-                
-                if not bParentesiTonde : 
-                    return None
-
-                sFoot = ''
+                    sFoot = ''
                
-            elif self.m_eType == enum_ExpType.eBetween :
-				
-                sVal1, sVal2, bResult = Gen.Split(sFoot, ' AND ')
-				
-                if not bResult :
-                    return None
-												
-                self.m_eType = enum_ExpType.eAnd
+                case enum_ExpType.eBetween :
+                    
+                    sVal1, sVal2, bResult = Gen.Split(sFoot, ' AND ')
+                    
+                    if not bResult :
+                        return None
+                                                    
+                    self.m_eType = enum_ExpType.eAnd
 
-                sFoot = f'({sHead} <= {sVal2})' 
-                sHead = f'({sHead} >= {sVal1})' 
+                    sFoot = f'({sHead} <= {sVal2})' 
+                    sHead = f'({sHead} >= {sVal1})' 
 
-            elif self.m_eType == enum_ExpType.eNotBetween :
-				
-                sVal1, sVal2, bResult = Gen.Split(sFoot, ' AND ')
-				
-                if not bResult :
-                    return None
-												
-                self.m_eType = enum_ExpType.eOr
+                case enum_ExpType.eNotBetween :
+                    
+                    sVal1, sVal2, bResult = Gen.Split(sFoot, ' AND ')
+                    
+                    if not bResult :
+                        return None
+                                                    
+                    self.m_eType = enum_ExpType.eOr
 
-                sFoot = f'({sHead} > {sVal2})' 
-                sHead = f'({sHead} < {sVal1})' 
+                    sFoot = f'({sHead} > {sVal2})' 
+                    sHead = f'({sHead} < {sVal1})' 
 			
             if sHead != '' :
                 oNodo = SqlExpNode()
@@ -248,7 +253,7 @@ class SqlExpNode :
             vNodeList.append(self)
 
         return self
-
+    
     def _getColumns(self, sExpr : str, vsColList : list) :
 
         sExpr, bResult = Gen.RemoveTonde(sExpr)
@@ -298,6 +303,7 @@ class SqlExp:
         '_LessHnd',
         '',# not between
         '',# between
+        '_ModHnd',
         '_MoltyHnd',
         '_DivHnd',
         '_SumHnd',
@@ -403,6 +409,16 @@ class SqlExp:
     def _NotInHnd(self, oThisValue, voValues) -> bool:
         
        return (oThisValue not in voValues)
+
+    def _ModHnd(self, oPar1, oPar2) :
+
+        if oPar1 in (NULL, None) :
+            return oPar1
+			
+        if oPar2 in (NULL, None) :
+            return oPar2
+
+        return oPar1 % self._typeHnd(oPar1, oPar2)
 
     def _MoltyHnd(self, oPar1, oPar2) :
 
