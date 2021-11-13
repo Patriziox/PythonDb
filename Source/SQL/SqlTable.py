@@ -1,4 +1,7 @@
 import pickle
+from typing import Tuple
+from typing_extensions import Literal
+
 import SqlGlobals as Glob
 
 from FileSystem import *
@@ -75,6 +78,9 @@ class SqlTable:
         self.m_oError = SqlError()
         self.m_vDefault = []
 
+    def GetError(self) -> SqlError:
+        return self.m_oError
+        
     def Drop(self)->bool:
         
         sPath = f"{self.m_sRoot}\\{Glob.TABLE_PREFIX}{self.m_sName}{Glob.TABLE_DEF_EXT}"
@@ -85,8 +91,7 @@ class SqlTable:
 
         sPath = f"{self.m_sRoot}\\{Glob.TABLE_PREFIX}{self.m_sName}{Glob.TABLE_DAT_EXT}"
         FileSystem.RemoveFile(sPath)
-  
-
+      
     def _PrimaryKeyHnd(self, sQuery : str) -> bool:
         
         if(self.m_vPrimaryKey != []):
@@ -172,6 +177,45 @@ class SqlTable:
             self.m_fTarget.close()
         
 
+    def _addColumn(self, sColPars : str, oColsKeys : SqlColKeys, iColIndex : int) -> Tuple[SqlColumn, bool, bool]:
+                 
+        oColumn = SqlColumn(self)
+        
+        if not oColumn.Parse(sColPars, oColsKeys) :
+            self.m_oError = oColumn.Error().GetNote(f"Column #{iColIndex} : {oColumn.Error().GetNote()}")
+            return None, False, False
+
+        for oCol in self.m_voColumns :
+            if oCol == oColumn :
+                self.m_oError = SqlError(enum_Error.eNotPossible, f'Column {oColumn.GetName()} already declared in this table')
+                return None, False, False
+        
+        if oColumn.IsPrimaryKey() :
+            if self.m_vPrimaryKey :
+                self.m_oError = SqlError(enum_Error.eNotPossible, 'Primary-key already declared')
+                return None, False, False
+            
+            self.m_vPrimaryKey.append(oColumn)
+
+        bAutoInc = oColumn.IsAutoInc()
+        
+        bNull = False
+        
+        if oColumn.IsNull() :
+            
+            iQntNullCol = 0
+            
+            for oCol in self.m_voColumns :
+                if oCol.IsNull() :
+                    iQntNullCol += 1
+                    
+            oColumn.InitNullMask(iQntNullCol)
+            bNull = True
+
+        self.m_voColumns.append(oColumn)
+
+        return oColumn, bAutoInc, bNull
+    
     def Parse(self, sQuery: str) -> bool:
      
         oColsKeys = SqlColKeys()
@@ -197,8 +241,9 @@ class SqlTable:
 
         iCol = 0
         for sArg in vArgs:
-
-            Handler = None
+            # eventuali impostazioni di tabella
+            
+            oHandler = None
 
             for vAttribute in self.st_tAttributeToken:
 				
@@ -206,52 +251,64 @@ class SqlTable:
 				
                 if(sBody != None):
                                         
-                    Handler = getattr(self, vAttribute[1])
+                    oHandler = getattr(self, vAttribute[1])
 
-                    if(Handler(sBody) == False):
+                    if(oHandler(sBody) == False):
                         
                         self.Kill()
                         
                         return False
 
                     break
-                
-            if(Handler != None):
+            #   
+            if(oHandler != None):
                 continue
 				
-            oColumn = SqlColumn(self)
+            # oColumn = SqlColumn(self)
             
-            if(oColumn.Parse(sArg, oColsKeys) == False):
+            # if(oColumn.Parse(sArg, oColsKeys) == False):
                 
-                self.Kill()
+            #     self.Kill()
                 
-                self.m_oError = oColumn.Error().GetNote(f"Column #{iCol} : {oColumn.Error().GetNote()}")
+            #     self.m_oError = oColumn.Error().GetNote(f"Column #{iCol} : {oColumn.Error().GetNote()}")
                 
-                return False
+            #     return False
 
-            if(oColumn.IsPrimaryKey() == True):
-                if(self.m_vPrimaryKey != []):
+            # if(oColumn.IsPrimaryKey() == True):
+            #     if(self.m_vPrimaryKey != []):
                     
-                    self.m_oError = SqlError(enum_Error.eNotPossible, 'Primary-key already declared')
-                    return False
+            #         self.m_oError = SqlError(enum_Error.eNotPossible, 'Primary-key already declared')
+            #         return False
                 
-                self.m_vPrimaryKey.append(oColumn)
+            #     self.m_vPrimaryKey.append(oColumn)
 
-            if(oColumn.IsAutoInc() == True):
+            # if(oColumn.IsAutoInc() == True):
+            #     iQntAutoIncCol += 1
+
+            # if(oColumn.IsNull() == True):
+                
+            #     oColumn.InitNullMask(iQntNullCol)
+            #     iQntNullCol += 1
+
+            # self.m_voColumns.append(oColumn)
+
+            oColumn, bAutoInc, bNull = self._addColumn(sArg, oColsKeys, iCol)
+            
+            if not oColumn :
+                self.Kill()
+                return False
+            
+            if bAutoInc :
                 iQntAutoIncCol += 1
-
-            if(oColumn.IsNull() == True):
                 
-                oColumn.InitNullMask(iQntNullCol)
+            if bNull :
                 iQntNullCol += 1
-
-            self.m_voColumns.append(oColumn)
-
+                
             iCol += 1
 
         #end for
              
-        self.m_oError = SqlError(iQntAutoIncCol)
+        # self.m_oError = SqlError(iQntAutoIncCol)
         
         self.m_oHead.SetAutoIncValue([1] * iQntAutoIncCol)
         
@@ -550,7 +607,6 @@ class SqlTable:
             self.m_iIndex = iIndex
             self.m_oHead.SetIndex(iIndex)
 
-
     def GetColsName(self, bFullName : bool = False) -> list:
         
         vNames = []
@@ -574,6 +630,58 @@ class SqlTable:
             vValues.append(oCol.GetDefault())
 
         return vsName, vValues
+   
+    def AddColumn(self, sQuery : str) -> bool :
+        
+        oColsKeys = self.m_oHead.GetKeys()
+        
+        iColIndex = len(self.m_voColumns)
+        
+        oColumn, bAutoInc, bNull = self._addColumn(sQuery, oColsKeys, iColIndex)
+            
+        if not oColumn :
+            return False
+            
+        if bAutoInc :
+            iQntAutoIncCol = len(self.m_oHead.GetAutoIncValues()) + 1
+            self.m_oHead.SetAutoIncValue([1] * iQntAutoIncCol)
+            
+        if bNull :
+            iQntNullCol = self.m_oHead.GetQntNullCols() + 1
+            self.m_oHead.InitNull(iQntNullCol)
+        
+        return True
+    
+    def DropColumn(self, sColName : str) -> bool :
+                
+        oColumn : SqlColumn
+        
+        oColumn = None
+        voColumns = []
+        
+        for oCol in self.m_voColumns :
+            if oCol == oColumn :
+                oColumn = oCol
+            else :
+                voColumns.append(oCol)
+        
+        if not oColumn :    
+            self.m_oError = SqlError(enum_Error.eColumnUndefined, f"Not found Column named '{sColName}'")
+            return False
+                        
+        if oColumn.IsAutoInc() :
+            iQntAutoIncCol = len(self.m_oHead.GetAutoIncValues()) - 1
+            self.m_oHead.SetAutoIncValue([1] * iQntAutoIncCol)
+            
+        if oColumn.IsNull() :
+            iQntNullCol = self.m_oHead.GetQntNullCols() - 1
+            self.m_oHead.InitNull(iQntNullCol)
+        
+        self.m_oHead.GetKeys().Delete(oColumn.GetName())
+                    
+        self.m_voColumns = voColumns
+        
+        return True            
    
 #end class        
         

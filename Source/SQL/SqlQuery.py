@@ -18,12 +18,12 @@ class SqlQuery:
         ('CREATE TABLE IF NOT EXISTS ', '_CreateTableHnd', (True, False, ) ),
         ('CREATE TABLE ', '_CreateTableHnd', (False, False, ) ),
         ('INSERT INTO ', '_InsertIntoHnd', None),
-        ('SELECT ', '_SelectHnd', None)
+        ('SELECT ', '_SelectHnd', None),
+        ('ALTER TABLE ', '_AlterTableHnd', None),
     )
     
-    def __init__(self, oDataBase : SqlTables) :
-
-        self.m_oDataBase = oDataBase
+    def __init__(self, oTables : SqlTables) :
+        self.m_oTables = oTables
 
     def Parse(self, sQuery : str) :
         
@@ -54,10 +54,8 @@ class SqlQuery:
 
         if not isinstance(vPars[1], bool) :
             return enum_TcpToken.eReplySyntaxError, None
-
-        oTables = self.m_oDataBase.Tables()
-
-        eResult, oTable = oTables.CreateTable(vPars[0], vPars[1], sQuery)
+        
+        eResult, oTable = self.m_oTables.CreateTable(vPars[0], vPars[1], sQuery)
 
         if(eResult == Glob.enum_TcpToken.eReplySuccessful):
             return enum_TcpToken.eReplySuccessful, None
@@ -100,9 +98,9 @@ class SqlQuery:
 
         return enum_TcpToken.eReplySuccessful if bResult else enum_TcpToken.eReplyFailure, None
 
-    def _SelectHnd(self, sQuery) :
+    def _SelectHnd(self, sQuery : str) :
         
-        oSelect = SqlSelect(self.m_oDataBase.Tables())
+        oSelect = SqlSelect(self.m_oTables)
 
         oSqlTuples = oSelect.Parse(sQuery)
 
@@ -115,7 +113,48 @@ class SqlQuery:
             oSqlError = SqlError(enum_Error.eUnspecified, '???')
 
         return enum_TcpToken.eReplyFailure, oSqlError.Serialize()
+    
+    def _AlterTableHnd(self, sQuery : str) :
 
+        sTableName, sColumn, bResult = Gen.Split(sQuery, ' ADD ')
+                
+        oTable = self.m_oTables.GetTable(sTableName)
+            
+        if not oTable :
+            return enum_TcpToken.eReplyFailure, SqlError(enum_Error.eSyntax, f'Not found any Table named "{sTableName}"').Serialize()
 
+        if bResult :
+            
+            if oTable.AddColumn(sColumn) :
+                oTable.Save()
+                return enum_TcpToken.eReplySuccessful, None
+        else :
+            
+            sTableName, sColumn, bResult = Gen.Split(sQuery, ' DROP COLUMN ')   
+            
+            if bResult :
+                if oTable.DropColumn(sColumn) :
+                    oTable.Save()
+                    return enum_TcpToken.eReplySuccessful, None
+
+            else :
+                
+                sTableName, sColumn, bResult = Gen.Split(sQuery, ' MODIFY COLUMN ')
+                
+                if bResult :
+                    
+                    sColumnName, _, _ = Gen.Split(sColumn, ' ')
+                    
+                    if oTable.DropColumn(sColumnName) :
+                        if oTable.AddColumn(sColumn) :
+                            oTable.Save()
+                            return enum_TcpToken.eReplySuccessful, None
+                
+        oSqlError = oTable.GetError()
+
+        if not oSqlError :
+            oSqlError = SqlError(enum_Error.eUnspecified, '???')
+
+        return enum_TcpToken.eReplyFailure, oSqlError.Serialize()
         
-
+        
