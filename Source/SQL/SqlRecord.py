@@ -46,9 +46,7 @@ class SqlRecord:
            
             oBody = bytearray()
                 
-            iIndex = 0
-
-            for col in self.m_oTable.Columns():
+            for col, iIndex in enumerate(self.m_oTable.Columns()) :
 
                 it = self.m_vFields[iIndex] 
 
@@ -71,8 +69,7 @@ class SqlRecord:
                         bin = pack('I', it)
 
                 oBody.extend(bin)
-                iIndex += 1
-            
+
             self.m_oHead.SetSize(len(oBody))
             
             self.m_oHead.Save(fTarget)
@@ -97,8 +94,6 @@ class SqlRecord:
             return False
 
         oBuff = fSource.read(iQntByte)
-
-        # iNullColsIndex = 0
 
         for oCol in self.m_oTable.Columns():
             
