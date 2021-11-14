@@ -1,4 +1,5 @@
 import glob
+from typing import Tuple
 
 import SqlGlobals as Glob
 from SqlGeneric import SqlGeneric as Gen
@@ -55,7 +56,7 @@ class SqlTables:
     def GetTableNames(self) -> list:
         return self.m_vsTableName
 
-    def CreateTable(self, bIfNotExist : bool, bTemporary : bool, sQuery : str) -> Glob.enum_TcpToken and SqlTable:
+    def CreateTable(self, bIfNotExist : bool, bTemporary : bool, sQuery : str) -> Tuple[Glob.enum_TcpToken, SqlTable]:
 
         oTable = SqlTable(f'{self.m_sRoot}\\{Glob.TABLES_FOLDER}', bTemporary)
         

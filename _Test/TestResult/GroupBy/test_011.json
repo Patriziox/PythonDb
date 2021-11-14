@@ -1,0 +1,10 @@
+{
+    "query" : "select INDIVIDUO.uidCitta, citta.nome, sum(peso) as TOTPESO from individuo join citta on INDIVIDUO.uidcitta = citta.uidCitta group by citta.uidcitta having (TOTPESO % 3) = 0 && TOTPESO > 250",
+    "checkMode" : "check",
+    "DBName": "anagrafeTest",
+    "DBPwd": "anag",
+    "caption" : ["INDIVIDUO.UIDCITTA", "CITTA.NOME", "TOTPESO"],
+    "tuples" : [
+        [1,"Tokio", 264]
+    ]
+}

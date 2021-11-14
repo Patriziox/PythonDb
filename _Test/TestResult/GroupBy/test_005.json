@@ -1,5 +1,5 @@
 {
-    "query" : "select individuo.uidCitta, peso from individuo GROUP BY GROUPING SETS (individuo.uidCitta), (peso)",
+    "query" : "select individuo.uidCitta, peso from individuo GROUP BY GROUPING SETS( (individuo.uidCitta), (peso))",
     "checkMode" : "check",
     "DBName": "anagrafeTest",
     "DBPwd": "anag",

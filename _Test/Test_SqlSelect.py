@@ -2,7 +2,7 @@ import os
 import sys
 import json
 
-# sys.path.append('c:\\Users\\Patrizio\\myProject\\Python\\SqlEngine\\Source')
+# sys.path.append('c:\\Users\\Patrizio\\work\\myProject\\Python\\PythonDb\\Source')
 sys.path.append('d:\\myProject\\Python\\PythonDb\\Source')
 
 import unittest
@@ -35,7 +35,29 @@ class TestSqlSelect(unittest.TestCase) :
 
         return vTupla
 
-
+    def _tuplaCompare(self, oTupla1 : list, oTupla2 : list) -> bool:
+        
+        if not (hasattr(oTupla1, '__len__') and hasattr(oTupla2, '__len__')) :
+            return (oTupla1 == oTupla2)
+        
+        if len(oTupla1) != len(oTupla2) :
+            return False
+        
+        for iIndex, oField1 in enumerate(oTupla1) :
+            
+            if isinstance(oField1, float) :
+                
+                field1 = round(oField1, 4)
+                field2 = round(oTupla2[iIndex], 4)
+                
+                if field1 != field2 :
+                     return False
+            
+            elif oField1 != oTupla2[iIndex] :
+                return False
+        
+        return True
+        
     def setUp(self) :
        
         self.m_oDataBase = SqlDataBase()
@@ -67,33 +89,35 @@ class TestSqlSelect(unittest.TestCase) :
 # 'insert into citta Values(0, "Madrid", 55)',
 
 
+
+
     def test_Select(self) :
        
         tQuery = (
-            # ('001', 'Test_001'),
-            # ('001', 'Test_002'),
-            # ('001', 'Test_003'),
-            # ('001', 'Test_004'),
-            # ('001', 'Test_006'),
-            # ('001', 'Test_007'),
-            # ('001', 'Test_008'),
-            # ('001', 'Test_009'),
-            # ('001', 'Test_011'),
-            # ('001', 'Test_012'),
-            # ('001', 'Test_013'),
-            # ('Union', 'Test_001'),
-            # ('Union', 'Test_002'),
-            # ('GroupBy', 'Test_001'),
-            # ('GroupBy', 'Test_002'),
-            # ('GroupBy', 'Test_003'),
-            # ('GroupBy', 'Test_004'),
-            # ('GroupBy', 'Test_005'),
-            # ('GroupBy', 'Test_006'),
-            # ('GroupBy', 'Test_007'),
-            # ('GroupBy', 'Test_008'),
+            ('001', 'Test_001'),
+            ('001', 'Test_002'),
+            ('001', 'Test_003'),
+            ('001', 'Test_004'),
+            ('001', 'Test_006'),
+            ('001', 'Test_007'),
+            ('001', 'Test_008'),
+            ('001', 'Test_009'),
+            ('001', 'Test_011'),
+            ('001', 'Test_012'),
+            ('001', 'Test_013'),
+            ('Union', 'Test_001'),
+            ('Union', 'Test_002'),
+            ('GroupBy', 'Test_001'),
+            ('GroupBy', 'Test_002'),
+            ('GroupBy', 'Test_003'),
+            ('GroupBy', 'Test_004'),
+            ('GroupBy', 'Test_005'),
+            ('GroupBy', 'Test_006'),
+            ('GroupBy', 'Test_007'),
+            ('GroupBy', 'Test_008'),
             ('GroupBy', 'Test_009'),
-           
-
+            ('GroupBy', 'Test_010'),
+            ('GroupBy', 'Test_011'),
         )
 
         for tItem in tQuery :
@@ -129,11 +153,12 @@ class TestSqlSelect(unittest.TestCase) :
                 jsonTuple = jsonTest['tuples']
 
                 oSqlTuple = pickle.loads(oResult)
-               
-                self.assertEqual(oSqlTuple.GetLabels(), jsonTest['caption'])
-                             
+                
                 sCheckMode = jsonTest['checkMode']
-
+                 
+                if sCheckMode != enum_TestMode.eNoCheck.value :
+                    self.assertEqual(oSqlTuple.GetLabels(), jsonTest['caption'])
+                
                 print(oSqlTuple.GetLabels())
                 
                 match sCheckMode :
@@ -150,7 +175,8 @@ class TestSqlSelect(unittest.TestCase) :
                             vTupla = self._parseTupla(oTupla)
 
                             for iIndex2, jsonTupla in enumerate(jsonTuple) :
-                                if not vbJsonCheck[iIndex2] and vTupla == jsonTupla :
+                                # if not vbJsonCheck[iIndex2] and vTupla == jsonTupla :
+                                if not vbJsonCheck[iIndex2] and self._tuplaCompare(vTupla, jsonTupla) :
                                     
                                     vbDbCheck[iIndex1] = True
                                     vbJsonCheck[iIndex2] = True
@@ -167,7 +193,6 @@ class TestSqlSelect(unittest.TestCase) :
                             if not bState :
                                 print('Missing : ', jsonTuple[iIndex1])
                                 bFailure = True 
-
 
                         self.assertFalse(bFailure)
 
@@ -199,8 +224,9 @@ class TestSqlSelect(unittest.TestCase) :
                                 
                                 for ii in rStep :
                                 
-                                    if vTupla == vjTuple[ii] :
-                                        
+                                    # if vTupla == vjTuple[ii] :
+                                    if self._tuplaCompare(vTupla, vjTuple[ii]) :
+                                                                            
                                         vjTuple[ii] = None
                                         break
                                 else :

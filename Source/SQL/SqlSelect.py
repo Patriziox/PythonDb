@@ -34,9 +34,9 @@ class SqlSelect:
         (' WHERE EXISTS ', '_WhereExistsParser', None),
         (' WHERE ', '_WhereParser', None),
 		(' GROUP BY CUBE ', '_GroupByCubeParser', None),
-		(' GROUP BY GROUPING SETS ', '_GroupingSetsParser', None),
-		(' GROUP BY ROLLUP', '_GroupByParser_1', True),
-		(' GROUP BY ', '_GroupByParser_1', False),
+		(' GROUP BY GROUPING SETS ', '_GroupingSetsParser_1', None),
+		(' GROUP BY ROLLUP ', '_RollupParser_1', None),
+		(' GROUP BY ', '_GroupByParser_1', None),
 		(' ORDER BY ', '_OrderByParser', None),
 		(' HAVING ', '_HavingParser', None),
 		(' LIMIT ', '_LimitParser', None),
@@ -166,11 +166,18 @@ class SqlSelect:
         oSchema.Extend(self.m_oSchema)
         self.m_oSchema = oSchema
 
-        if self.m_vvGroupBy :
-            self._GroupByParser_2()
+        # if self.m_vvGroupBy :
+            # self._GroupByParser_2()
+
+        if self.m_voRollUp :
+            self._RollupParser_2()
 
         # nel 'GROUPING BY SETS' le colonne devono essere dichiarate nella clausola 'SELECT'
-        if len(self.m_vvGroupBy) > 1 :
+        elif len(self.m_vvGroupBy) > 1 :
+
+            if not self._GroupingSetsParser_2() :
+                return None
+
             for iNop, oSchema in self.m_vvGroupBy :
                 for oSchemaItem1 in oSchema :
                     
@@ -184,6 +191,10 @@ class SqlSelect:
                     else :
 
                         return None
+
+        elif self.m_vvGroupBy :
+            if not self._GroupByParser_2() :
+                return None
 
         if self.m_voRollUp :
 
@@ -414,7 +425,7 @@ class SqlSelect:
 
                     for iIndex, oCase in enumerate(self.m_voCase) :
                         
-                        oSchemaItem = SqlSchemaItem(enum_SqlSchemaType.eCase, -1, iIndex, enum_SqlSchemaType.eCase.value, enum_DataType.eNone, None, None, oCase.GetAlias())
+                        oSchemaItem = SqlSchemaItem(enum_SqlSchemaType.eCase, enum_SqlSchemaType.eCase.value, iIndex, enum_SqlSchemaType.eCase.value, enum_DataType.eNone, None, oCase.GetAlias(), oCase.GetAlias())
 
                         self.m_voSelectedCols.append(oSchemaItem)
                         vsAllColNames.append(oSchemaItem)
@@ -656,23 +667,20 @@ class SqlSelect:
         
         return True, iIndexHnd, sFoot, Handler
 
-    def _GroupByParser_1(self, sQuery : str, bRollup : bool) -> Tuple[Literal[True], int, str, str] | Tuple[Literal[False], None, None, None] :
+    def _GroupByParser_1(self, sQuery : str) -> Tuple[Literal[True], int, str, str] | Tuple[Literal[False], None, None, None] :
         
         iIndexHnd, oHandler, sColums, sFoot = Gen.GetHandler(self, sQuery, SqlSelect.st_tSelectClause)
 
         sColums, bResult = Gen.RemoveTonde(sColums)
-
+       
         self.m_vvGroupBy = Gen.Cut(sColums, ',')
 
-        self.m_voRollUp = bRollup
-
         return True, iIndexHnd, sFoot, oHandler
-
+  
     def _GroupByParser_2(self) -> bool :
        		
         vvGroupBy = []
-        voRollUp = []
-
+        
         for sColName in self.m_vvGroupBy:
             
             oSchemaItem = self._checkForColumns(sColName)
@@ -682,12 +690,8 @@ class SqlSelect:
 
             vvGroupBy.append(oSchemaItem)
 
-            if self.m_voRollUp :
-                voRollUp.append(oSchemaItem)
-
         self.m_vvGroupBy = [[0, vvGroupBy]]
-        self.m_voRollUp = voRollUp
-       
+      
         return True
 
     def _GroupByManager(self, vvFullTupleSet : list) -> list:
@@ -735,104 +739,158 @@ class SqlSelect:
 
         return vGroupFullTuple 
 
-    def _rollupAggregateManager(self, oNewRow : tuple, oTupla : tuple, iThisRollup : int, vValues : list, viQntRow : list) -> tuple:
-        
-        if oNewRow :
-    
-            for iIndexAggr, oAggr in enumerate(self.m_voAggregate) :
-                                
-                vValues[iIndexAggr][iThisRollup - 1] += vValues[iIndexAggr][iThisRollup] 
-                                                           
-                match oAggr.GetType() :
-                    case enum_AggregateFunc.eSum :
-                        
-                        oNewRow[enum_SqlSchemaType.eAggregate.value][oAggr.GetIndex()] = vValues[iIndexAggr][iThisRollup] 
-                        
-                vValues[iIndexAggr][iThisRollup] = 0
+    def _RollupParser_1(self, sQuery : str) -> Tuple[Literal[True], int, str, str] | Tuple[Literal[False], None, None, None] :
             
-            viQntRow[iThisRollup - 1] += viQntRow[iThisRollup]
-            viQntRow[iThisRollup] = 0
+        iIndexHnd, oHandler, sColums, sFoot = Gen.GetHandler(self, sQuery, SqlSelect.st_tSelectClause)
 
-            oNewRow = None
+        vsColums, bResult = Gen.RemoveTonde(sColums)
+
+        if not bResult :
+            return False, None, None, None
+
+        self.m_voRollUp = vsColums
+
+        return True, iIndexHnd, sFoot, oHandler
+
+    def _RollupParser_2(self) -> bool :
+       		
+        vvGroupBy = []
+        vRollUp = []
         
+        vsColumns = Gen.Cut(self.m_voRollUp, ',')
+
+        for sColName in vsColumns:
+            
+            oSchemaItem = self._checkForColumns(sColName)
+                       
+            if not oSchemaItem :
+                return False
+
+            vvGroupBy.append(oSchemaItem)
+            vRollUp.append(oSchemaItem)
+
+        self.m_vvGroupBy = [[0, vvGroupBy]]
+        self.m_voRollUp = vRollUp
+      
+        return True
+
+    def _rollupAggregateUpdater(self, oTupla : tuple, iThisRollup : int, vValues : list, viQntRow : list) :
+                        
         for iIndexAggr, oAggr in enumerate(self.m_voAggregate) :
             
             oAggr : SqlAggregate
             
             match oAggr.GetType() :
-                case enum_AggregateFunc.eSum :
-                    vValues[iIndexAggr][iThisRollup] += oTupla[enum_SqlSchemaType.eAggregate.value][iIndexAggr]
+                
+                case enum_AggregateFunc.eSum | enum_AggregateFunc.eAvg :
+                    
+                    vValues[iIndexAggr][iThisRollup] += oTupla[enum_SqlSchemaType.eRollUp.value][iIndexAggr][1]
+                
+        viQntRow[iThisRollup] += oTupla[enum_SqlSchemaType.eRollUp.value][iIndexAggr][0]          
+                
 
-        viQntRow[iThisRollup] += 1            
+    def _rollupAddSubtotalRow(self, oPivot : tuple, iThisRollup : int, iSize : int, vValues : list, viQntRow : list) -> tuple:
+                
+        oNewRow = deepcopy(oPivot)
+                
+        for iRollUp in range(iThisRollup, iSize) :
+
+            oRollUp = self.m_voRollUp[iRollUp] 
+
+            oNewRow[oRollUp.GetIndex()][oRollUp.GetColumn()] = NULL
+
+        for iIndexAggr, oAggr in enumerate(self.m_voAggregate) :
+                            
+            vValues[iIndexAggr][iThisRollup - 1] += vValues[iIndexAggr][iThisRollup] 
+                                                        
+            match oAggr.GetType() :
+                case enum_AggregateFunc.eSum :
+                    
+                    oNewRow[enum_SqlSchemaType.eAggregate.value][oAggr.GetIndex()] = vValues[iIndexAggr][iThisRollup] 
+
+                case enum_AggregateFunc.eAvg :
+                    
+                    oNewRow[enum_SqlSchemaType.eAggregate.value][oAggr.GetIndex()] = vValues[iIndexAggr][iThisRollup] / viQntRow[iThisRollup]
+                    
+            vValues[iIndexAggr][iThisRollup] = 0
         
+        viQntRow[iThisRollup - 1] += viQntRow[iThisRollup]
+        viQntRow[iThisRollup] = 0
+
         return oNewRow
 
     def _RollUpManager(self, vvFullTupleSet : list) -> list :
         
+        vvFullTupleResult = []
+
         iSize = len(self.m_voRollUp)
 
         vvFullTupleTemp = self._MatrixDicotomicSort(vvFullTupleSet, self.m_voRollUp, [True] * iSize)
                 
         viQntRow = [0] * iSize
-        vValues = [[0] * iSize] * len(self.m_voAggregate)
+                        
+        vValues = [None] * len(self.m_voAggregate)
         
-        vvFullTupleResult = []
-       
+        for ii in range(0, len(self.m_voAggregate)) :
+            vValues[ii] = [0] * iSize
+
+               
         oPivot = vvFullTupleTemp[0]
         		
-        iThisRollup = iSize - 2
+        iThisRollup = iSize - 1
         
-        rangeRollup = range(iThisRollup + 1, iSize)
+        rangeForCheck = range(0, iSize - 1)
 
         oNewRow = None
+        
+        iIndexRollupCol = 1
         
         for oTupla in vvFullTupleTemp :
                            
             oSchemaItem : SqlSchemaItem
+                      
+            for ii in rangeForCheck :
+
+                oSchemaItem = self.m_voRollUp[ii] 
             
-            oSchemaItem = self.m_voRollUp[iThisRollup] 
+                iTable = oSchemaItem.GetIndex()
+                iCol = oSchemaItem.GetColumn()
+
+                if oTupla[iTable][iCol] != oPivot[iTable][iCol] :
+                    iIndexRollupCol = iSize - ii
+                    break
             
-            iTable = oSchemaItem.GetIndex()
-            iCol = oSchemaItem.GetColumn()
+            iThisRollupTmp = iThisRollup
+                                
+            while iIndexRollupCol > 1 :
 
-            if oTupla[iTable][iCol] != oPivot[iTable][iCol] :
-                
-                oNewRow = deepcopy(oPivot)
-                
-                for iRollUp in rangeRollup :
+                oNewRow = self._rollupAddSubtotalRow(oPivot, iThisRollupTmp, iSize, vValues, viQntRow)
 
-                    oRollUp = self.m_voRollUp[iRollUp] 
-
-                    oNewRow[oRollUp.GetIndex()][oRollUp.GetColumn()] = NULL
-                
                 vvFullTupleResult.append(oNewRow)
 
-                oPivot = oTupla
-
-            vvFullTupleResult.append(oTupla)
-                        
-            oNewRow = self._rollupAggregateManager(oNewRow, oTupla, iThisRollup + 1, vValues, viQntRow)
-
-        for ii in range(0, 2):
-
-            oNewRow = deepcopy(oPivot)
-                    
-            for iRollUp in rangeRollup :
-
-                oRollUp = self.m_voRollUp[iRollUp] 
-
-                oNewRow[oRollUp.GetIndex()][oRollUp.GetColumn()] = NULL
+                iThisRollupTmp -= 1
+                iIndexRollupCol -= 1
             
-            vvFullTupleResult.append(oNewRow)
-                
-            self._rollupAggregateManager(oNewRow, oTupla, iThisRollup + 1, vValues, viQntRow)
+            self._rollupAggregateUpdater(oTupla, iThisRollup, vValues, viQntRow)
 
-            iThisRollup = -1
-            rangeRollup = range(0, iSize)
+            vvFullTupleResult.append(oTupla)       
+
+            oPivot = oTupla
+
+        iThisRollupTmp = iThisRollup
+        
+        iIndexRollupCol = iSize
+        
+        while iIndexRollupCol > 0 :
+
+            oNewRow = self._rollupAddSubtotalRow(oPivot, iThisRollupTmp, iSize, vValues, viQntRow)
+
+            vvFullTupleResult.append(oNewRow)
+
+            iThisRollupTmp -= 1
+            iIndexRollupCol -= 1
         
         return vvFullTupleResult
-
-
 
     def _GroupByCubeParser(self, sQuery : str) :
 
@@ -868,9 +926,9 @@ class SqlSelect:
 
         sNewQuery = f'( {sNewQuery[0:-1]} ) {sFoot if sFoot else  ""}'
         
-        return self._GroupingSetsParser(sNewQuery)
+        return self._GroupingSetsParser_1(sNewQuery)
 
-    def _GroupingSetsParser(self, sQuery : str) :
+    def _GroupingSetsParser_1(self, sQuery : str)  -> Tuple[Literal[True], int, str, str] | Tuple[Literal[False], None, None, None] :
         
         iIndexHnd, oHandler, sGroupingRule, sFoot = Gen.GetHandler(self, sQuery, SqlSelect.st_tSelectClause)
 		
@@ -887,9 +945,7 @@ class SqlSelect:
         vvGroupBy = []	
                 
         while sGroupingRule :
-            
-            vGroupBy = []
-            
+                                    
             sThisRule, sGroupingRule, bResult = Gen.Split(sGroupingRule, ',')
 
             sThisRule, bResult = Gen.RemoveTonde(sThisRule)
@@ -897,26 +953,46 @@ class SqlSelect:
             if not bResult :
                 return False, None, None, None
 
-            if sThisRule == '' :
-                vvGroupBy.append([0, [SqlSchemaItem(enum_SqlSchemaType.eEmpty, -1, -1, -1, enum_DataType.eNone)]])
-                continue
-
-            vsColums = Gen.Cut(Gen.RemoveTonde(sThisRule)[0], ',')
-        
-            for sColName in vsColums:
-            
-                oTupla = oTableKeys.GetKeys(sColName)
-
-                if not oTupla :
-                    return False, None, None, None
-
-                vGroupBy.append(oTupla)
-        
-            vvGroupBy.append([0, vGroupBy])
+            vvGroupBy.append(sThisRule)
         
         self.m_vvGroupBy = vvGroupBy
                 
         return True, iIndexHnd, sFoot, oHandler
+
+    def _GroupingSetsParser_2(self) -> bool :
+        
+        vvGroupBy = []
+        voRollUp = []
+
+        for sThisRule in self.m_vvGroupBy :
+            
+            if sThisRule == '' :
+                vvGroupBy.append([0, [SqlSchemaItem(enum_SqlSchemaType.eEmpty, -1, -1, -1, enum_DataType.eNone)]])
+                continue
+            
+            vGroupBy = []
+
+            vsColums = Gen.Cut(sThisRule, ',')
+        
+            for sColName in vsColums:
+            
+                oSchemaItem = self._checkForColumns(sColName)
+
+                if not oSchemaItem :
+                    self.m_oError = SqlError(enum_Error.eColumnUndefined, f'Not found any column named : "{sColName}"')
+                    return False
+
+                vGroupBy.append(oSchemaItem)
+
+                if self.m_voRollUp :
+                    voRollUp.append(oSchemaItem)
+        
+            vvGroupBy.append([0, vGroupBy])
+        
+        self.m_vvGroupBy = vvGroupBy
+        self.m_voRollUp = voRollUp
+
+        return True
 
     def _GroupingSetsManager(self, vvFullTupleSet : list) -> list:
               
@@ -1371,7 +1447,7 @@ class SqlSelect:
 
                 if bExternValue :
 
-                    oSingleFullTupla[enum_SqlSchemaType.eExpressione.value] = vExpValue
+                    oSingleFullTupla[enum_SqlSchemaType.eExpression.value] = vExpValue
                 
                 else :
                     

@@ -50,7 +50,7 @@ class SqlDataBaseModel:
 
         return (sPwdSha256 == self.m_sPwdSha256)
 
-class SqlDataBase:
+class SqlDataBase :
 
     def __init__(self) :
         self.Kill()
@@ -102,7 +102,7 @@ class SqlDataBase:
         return self.m_oTables
 
     def Query(self, sQuery : str) -> bool:
-        return SqlQuery(self).Parse(sQuery)
+        return SqlQuery(self.m_oTables).Parse(sQuery)
     
     def GetTables(self) -> SqlTables :
         return self.m_oTables

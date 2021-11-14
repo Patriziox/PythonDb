@@ -82,9 +82,7 @@ class SqlQuery:
         elif sCoda != '' :
             return enum_TcpToken.eReplySyntaxError, None
 
-        oTables = self.m_oDataBase.GetTables()
-
-        oTable = oTables.GetTable(sName)
+        oTable = self.m_oTables.GetTable(sName)
 
         if not oTable :
             return enum_TcpToken.eReplySyntaxError, None

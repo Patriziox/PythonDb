@@ -5,7 +5,8 @@ class SqlAggregateItem :
 
     def __init__(self) :
         
-        self.m_vValue    = []
+        # ogni elemento dell'array è relarivo a un gruppo
+        self.m_vValue    = [] 
         self.m_viQntRow  = []
      
     def Evalute(self, eAggrFunc : enum_AggregateFunc, oExp : SqlExp, bDistinct : bool, vValue : list, iIndex : int) :
@@ -28,6 +29,8 @@ class SqlAggregateItem :
 
         oResult = oExp.Evalute(vValue, bDistinct)
 
+        self.m_viQntRow[iIndex] += 1
+        
         match eAggrFunc :
 
             case enum_AggregateFunc.eCount :
@@ -39,10 +42,10 @@ class SqlAggregateItem :
 
                         if vValori not in self.m_vItems :
                             self.m_vItems.append(vValori)
-                            self.m_viQntRow[iIndex] += 1
+                            # self.m_viQntRow[iIndex] += 1
 
-                    else : 
-                        self.m_viQntRow[iIndex] += 1
+                    # else : 
+                        # self.m_viQntRow[iIndex] += 1
 
             case enum_AggregateFunc.eSum :
                 
@@ -53,7 +56,7 @@ class SqlAggregateItem :
             
                 if isinstance(oResult, (int,  float)) :
                     self.m_vValue[iIndex] += oResult
-                    self.m_viQntRow[iIndex] += 1
+                    # self.m_viQntRow[iIndex] += 1
 
             case enum_AggregateFunc.eMin :
             
@@ -149,5 +152,5 @@ class SqlAggregate :
     def GetValue(self, iIndex : int, iSingleAggregate : int = 0) :
         return self.m_voAggregate[iSingleAggregate].GetValue(self.m_eAggrFunc, iIndex)
 
-    def GetRollUp(self, iIndex : int, iSingleAggregate : int = 0) -> Tuple[int, any] :
-        return self.m_voAggregate[iSingleAggregate].GetRollUp(iIndex)
+    def GetRollUp(self, iThisGroup : int, iSingleAggregate : int = 0) -> Tuple[int, any] :
+        return self.m_voAggregate[iSingleAggregate].GetRollUp(iThisGroup)

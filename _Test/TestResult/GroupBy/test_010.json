@@ -1,34 +1,47 @@
 {
     "query" : "select individuo.uidCitta, (peso % 2) as MODPESO, case(when eta > 60 then \"OLD\" when eta > 18 then \"BIG\" else \"BABY\" end as stato)   , sum(individuo.eta) as SUM_ETA, avg(individuo.eta) as AVG_ETA from individuo GROUP BY ROLLUP (individuo.uidCitta, MODPESO, stato)",
-    "checkMode" : "nocheck",
+    "checkMode" : "check",
     "DBName": "anagrafeTest",
     "DBPwd": "anag",
     "caption" : ["INDIVIDUO.UIDCITTA", "MODPESO", "STATO", "SUM_ETA", "AVG_ETA"],
     "tuples" : [
 
         ["NULL", 0, "BABY", 12, 12.0],
-        ["NULL", 0, "NULL", 12, 12.0],
-        
+            ["NULL", 0, "NULL", 12, 12.0],
+            ["NULL", "NULL", "NULL", 12, 12.0],
+       
         [1, 0, "BIG", 36, 36.0],
+            [1, 0, "NULL", 36, 36.0],
 
-        [1, 1, "BIG", 11, 11],
-        
-        [1, 1, "BABY", 40, 40],
+        [1, 1, "BABY", 11, 11.0],
+        [1, 1, "BIG", 40, 40.0],
+            [1, 1, "NULL", 51, 25.5],
  
-        [2, "NULL", "OLD", 80, 80],
+            [1, "NULL", "NULL", 87, 29],
 
-        [2, 1, "BIG", 18, 18],
-        
-        [2, 1, "OLD", 75, 75],
+        [2, "NULL", "OLD", 80, 80.0],
+            [2, "NULL", "NULL", 80, 80.0],
 
-        [3, 0, "BABY", 17, 17],
-        
-        [3, 0, "OLD", 62, 62],
+        [2, 1, "BABY", 18, 18.0],
+        [2, 1, "OLD", 75, 75.0],
+            [2, 1, "NULL", 93, 46.5],
+            [2, "NULL", "NULL", 173, 57.6667],
 
-        [3, 1, "BIG", 47, 47],
+        [3, 0, "BABY", 17, 17.0],
+        [3, 0, "OLD", 62, 62.0],
+            [3, 0, "NULL", 79, 39.5],
+
+        [3, 1, "BIG", 47, 47.0],
+            [3, 1, "NULL", 47, 47.0],
+            [3, "NULL", "NULL", 126, 42.0],
 
         [4, 0, "OLD", 179, 89.5],
+            [4, 0, "NULL", 179, 89.5],
 
-        [4, 1, "BABY", 9, 9]
+        [4, 1, "BABY", 9, 9.0],
+            [4, 1, "NULL", 9, 9.0],
+            [4, "NULL", "NULL", 188, 62.6667],
+            
+            ["NULL", "NULL", "NULL", 586, 45.0769]
     ]
 }

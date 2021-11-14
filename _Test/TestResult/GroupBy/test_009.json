@@ -1,5 +1,5 @@
 {
-    "query" : "select individuo.uidCitta, (peso % 2) as MODPESO, sum(individuo.eta) as ETA from individuo GROUP BY ROLLUP (individuo.uidCitta, MODPESO)",
+    "query" : "select individuo.uidCitta, (peso % 2) as MODPESO, sum(individuo.eta) as ETA from individuo GROUP BY ROLLUP ((individuo.uidCitta, MODPESO))",
     "checkMode" : "check",
     "DBName": "anagrafeTest",
     "DBPwd": "anag",

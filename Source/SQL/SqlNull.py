@@ -1,5 +1,8 @@
 class SqlNull:
 
+    def __str__(self) :
+        return '_NULL_'
+    
     def __eq__(self, item : object) -> bool:
         return True if isinstance(item, SqlNull) else False
 

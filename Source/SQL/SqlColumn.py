@@ -48,6 +48,12 @@ class SqlColumn:
 	def Error(self):
 		return self.m_oError
 	
+	def __eq__(self, oCol : 'SqlColumn') -> bool :
+		
+		if isinstance(oCol, SqlColumn) :
+			return oCol.GetName() == self.m_sName 
+
+		return False
 
 	def Kill(self):
 		self.m_iIndex = None

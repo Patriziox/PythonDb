@@ -13,6 +13,14 @@ class SqlColKeys:
 
     def Update(self, sColName : str, iTableUid : int, iColIndex : int, eDataType : enum_DataType) -> None:
         self.m_doColKeys.update({sColName : SqlSchemaItem(enum_SqlSchemaType.eColumn, iTableUid, iColIndex, None, eDataType) })
+        
+    def Delete(self, sColName : str) -> None :
+        
+        self.m_doColKeys.pop(sColName)
+                        
+        for item, iIndex in enumerate(self.m_doColKeys) :
+            item.SetColumn(iIndex)
+        
 
     def GetKeys(self, sColName : str) -> SqlSchema:
         return self.m_doColKeys.get(sColName)

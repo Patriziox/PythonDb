@@ -1,0 +1,74 @@
+def _RollUpManager(self, vvFullTupleSet : list) -> list :
+        
+        vvFullTupleResult = []
+
+        iSize = len(self.m_voRollUp)
+
+        vvFullTupleTemp = self._MatrixDicotomicSort(vvFullTupleSet, self.m_voRollUp, [True] * iSize)
+                
+        viQntRow = [0] * iSize
+        
+        # vValues = [[0] * iSize] * len(self.m_voAggregate)
+        
+        vValues = [None] * len(self.m_voAggregate)
+        
+        for ii in range(0, len(self.m_voAggregate)) :
+            vValues[ii] = [0] * iSize
+
+               
+        oPivot = vvFullTupleTemp[0]
+        		
+        iThisRollup = iSize - 2
+        
+        rangeForCheck = range(iThisRollup, -1, -1)
+
+        oNewRow = None
+        
+        iIndexSubtotal = -1
+        
+        for oTupla in vvFullTupleTemp :
+                           
+            oSchemaItem : SqlSchemaItem
+            
+            for ii in rangeForCheck :
+
+                oSchemaItem = self.m_voRollUp[ii] 
+            
+                iTable = oSchemaItem.GetIndex()
+                iCol = oSchemaItem.GetColumn()
+
+                if oTupla[iTable][iCol] != oPivot[iTable][iCol] :
+                    iIndexSubtotal = ii
+                    
+            iThisRollupTmp = iThisRollup       
+            
+            while iIndexSubtotal > -1 :
+
+				rangeRollup = range(iThisRollupTmp, iSize)
+		
+				oNewRow = self._rollupAddSubtotalRow(oPivot, rangeRollup, iThisRollupTmp + 1, vValues, viQntRow)
+		
+				vvFullTupleResult.append(oNewRow)
+		        
+		        iThisRollupTmp -= 1
+		        iIndexSubtotal -= 1
+            
+            self._rollupAggregateUpdater(oTupla, iThisRollup + 1, vValues, viQntRow)
+
+            vvFullTupleResult.append(oTupla)       
+
+            oPivot = oTupla
+
+        iThisRollup += 1
+
+        while iThisRollup >= 0 :
+            
+            oNewRow = self._rollupAddSubtotalRow(oPivot, rangeRollup, iThisRollup, vValues, viQntRow)
+            vvFullTupleResult.append(oNewRow)
+
+            self._rollupAggregateUpdater(oTupla, iThisRollup, vValues, viQntRow)
+            
+            iThisRollup -= 1
+            rangeRollup = range(iThisRollup, iSize)
+               
+        return vvFullTupleResult

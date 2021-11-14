@@ -235,8 +235,8 @@ class SqlGeneric:
         return sFuncName, vArgs, sSource[iEnd + 1:].strip()
 
     @staticmethod
-    def RemoveTonde(sSource) -> Tuple[str, bool]:
-
+    def RemoveTonde(sSource : str) -> Tuple[str, bool]:
+        
         sSource = sSource.strip()
         
         lung = len(sSource)
@@ -269,6 +269,7 @@ class SqlGeneric:
                 if iCntTonde == 0 :
 
                     if hh == iIndexLastCh :
+
                         sResult, bResult =  SqlGeneric.RemoveTonde(sSource[1:-1])
 
                         return sResult, True

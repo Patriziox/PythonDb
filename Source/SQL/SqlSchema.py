@@ -46,7 +46,10 @@ class SqlSchemaItem :
 
     def GetColumn(self) -> int :
         return self.m_iColumn
-
+    
+    def SetColumn(self, iIndex : int) :
+        self.m_iColumn = iIndex
+    
     def GetIndex(self) -> int :
         return self.m_iIndex
     
